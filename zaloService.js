@@ -2,6 +2,8 @@
 import { Zalo, ThreadType } from 'zca-js';
 import { PROXIES, getAvailableProxyIndex } from './proxyService.js';
 import { triggerN8nWebhook } from './helpers.js';
+import { HttpsProxyAgent } from "https-proxy-agent";
+import nodefetch from "node-fetch";
 
 const zaloAccounts = [];
 
@@ -13,7 +15,12 @@ export async function loginZaloAccount() {
 
     return new Promise(async (resolve, reject) => {
         const proxy = PROXIES[proxyIndex];
-        const zalo = new Zalo();
+        const agent = new HttpsProxyAgent(proxy.url);
+        const zalo = new Zalo({
+            agent: agent,
+            // @ts-ignore
+            polyfill: nodefetch,
+        });
 
         const api = await zalo.loginQR(null, (qrData) => {
             if (qrData?.data?.image) {
