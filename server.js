@@ -6,6 +6,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Dùng để parse dữ liệu form
+
 app.use('/', routes);
 
 app.listen(PORT, () => {

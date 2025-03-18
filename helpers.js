@@ -1,26 +1,30 @@
 // helpers.js
 import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-export async function axiosFetch(url, options = {}) {
-    const { method = 'GET', headers, body } = options;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const configPath = path.join(__dirname, 'webhook-config.json');
+
+export function getWebhookUrl(key) {
     try {
-        const response = await axios({ url, method, headers, data: body, validateStatus: () => true });
-        return {
-            ok: response.status >= 200 && response.status < 300,
-            status: response.status,
-            json: async () => response.data,
-            text: async () => JSON.stringify(response.data),
-            headers: {
-                get: (name) => response.headers[name.toLowerCase()] || null,
-            },
-        };
+        if (fs.existsSync(configPath)) {
+            const content = fs.readFileSync(configPath, 'utf8');
+            const config = JSON.parse(content);
+            return config[key] || "";
+        } else {
+            return "";
+        }
     } catch (error) {
-        throw new Error(`Axios Fetch Error: ${error.message}`);
+        console.error("Error reading webhook config:", error);
+        return "";
     }
 }
 
-export async function triggerN8nWebhook(msg) {
-    const url = "https://n8n.dieucanbiet.org/webhook/zalo-api";
+export async function triggerN8nWebhook(msg, webhookUrl) {
+    const url = webhookUrl || "https://n8n.dieucanbiet.org/webhook/zalo-api1";
     try {
         await axios.post(url, { message: msg }, { headers: { 'Content-Type': 'application/json' } });
     } catch (error) {
