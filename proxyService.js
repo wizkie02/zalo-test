@@ -7,50 +7,57 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const proxiesFilePath = path.join(__dirname, 'proxies.json');
 
-let RAW_PROXIES = [];
-try {
-    const data = fs.readFileSync(proxiesFilePath, 'utf8');
-    RAW_PROXIES = JSON.parse(data);
-} catch (err) {
-    console.error('Không thể đọc file proxies.json:', err);
-    RAW_PROXIES = [];
-}
-
 const MAX_ACCOUNTS_PER_PROXY = 3;
-const PROXIES = RAW_PROXIES.map(p => ({ url: p, usedCount: 0, accounts: [] }));
 
-// Lấy proxy có thể sử dụng (chưa vượt quá số tài khoản cho phép)
-function getAvailableProxyIndex() {
-    for (let i = 0; i < PROXIES.length; i++) {
-        if (PROXIES[i].usedCount < MAX_ACCOUNTS_PER_PROXY) {
-            return i;
+class ProxyService {
+    constructor() {
+        this.RAW_PROXIES = [];
+        try {
+            const data = fs.readFileSync(proxiesFilePath, 'utf8');
+            this.RAW_PROXIES = JSON.parse(data);
+        } catch (err) {
+            console.error('Không thể đọc file proxies.json:', err);
+            this.RAW_PROXIES = [];
         }
+        this.PROXIES = this.RAW_PROXIES.map(p => ({ url: p, usedCount: 0, accounts: [] }));
     }
-    return -1; // Không còn proxy trống
+
+    getAvailableProxyIndex() {
+        for (let i = 0; i < this.PROXIES.length; i++) {
+            if (this.PROXIES[i].usedCount < MAX_ACCOUNTS_PER_PROXY) {
+                return i;
+            }
+        }
+        return -1; // Không còn proxy trống
+    }
+
+    addProxy(proxyUrl) {
+        const newProxy = { url: proxyUrl, usedCount: 0, accounts: [] };
+        this.PROXIES.push(newProxy);
+        this.RAW_PROXIES.push(proxyUrl);
+        fs.writeFileSync(proxiesFilePath, JSON.stringify(this.RAW_PROXIES, null, 2));
+        return newProxy;
+    }
+
+    removeProxy(proxyUrl) {
+        const index = this.PROXIES.findIndex(p => p.url === proxyUrl);
+        if (index === -1) {
+            throw new Error('Không tìm thấy proxy');
+        }
+        this.PROXIES.splice(index, 1);
+        const rawIndex = this.RAW_PROXIES.indexOf(proxyUrl);
+        if (rawIndex !== -1) {
+            this.RAW_PROXIES.splice(rawIndex, 1);
+        }
+        fs.writeFileSync(proxiesFilePath, JSON.stringify(this.RAW_PROXIES, null, 2));
+        return true;
+    }
+
+    getPROXIES() {
+        return this.PROXIES;
+    }
 }
 
-// Hàm thêm proxy mới
-function addProxy(proxyUrl) {
-    const newProxy = { url: proxyUrl, usedCount: 0, accounts: [] };
-    PROXIES.push(newProxy);
-    RAW_PROXIES.push(proxyUrl);
-    fs.writeFileSync(proxiesFilePath, JSON.stringify(RAW_PROXIES, null, 2));
-    return newProxy;
-}
+const proxyService = new ProxyService();
 
-// Hàm xóa proxy
-function removeProxy(proxyUrl) {
-    const index = PROXIES.findIndex(p => p.url === proxyUrl);
-    if (index === -1) {
-        throw new Error('Không tìm thấy proxy');
-    }
-    PROXIES.splice(index, 1);
-    const rawIndex = RAW_PROXIES.indexOf(proxyUrl);
-    if (rawIndex !== -1) {
-        RAW_PROXIES.splice(rawIndex, 1);
-    }
-    fs.writeFileSync(proxiesFilePath, JSON.stringify(RAW_PROXIES, null, 2));
-    return true;
-}
-
-export { PROXIES, getAvailableProxyIndex, addProxy, removeProxy };
+export { proxyService };

@@ -1,5 +1,5 @@
 # Sử dụng image Node.js chính thức (phiên bản 18-slim)
-FROM node:18-slim
+FROM node:18-alpine
 
 # Đặt thư mục làm việc trong container
 WORKDIR /app

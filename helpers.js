@@ -24,9 +24,9 @@ export function getWebhookUrl(key) {
 }
 
 export async function triggerN8nWebhook(msg, webhookUrl) {
-    const url = webhookUrl || "https://n8n.dieucanbiet.org/webhook/zalo-api1";
+    const url = webhookUrl;
     try {
-        await axios.post(url, { message: msg }, { headers: { 'Content-Type': 'application/json' } });
+        await axios.post(url, msg, { headers: { 'Content-Type': 'application/json' } });
     } catch (error) {
         console.error("Error sending request:", error);
     }

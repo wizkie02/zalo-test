@@ -1,0 +1,25 @@
+
+services:
+  zalo-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: zalo-server
+    container_name: zalo-server
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./proxies.json:/app/proxies.json
+      - ./webhook-config.json:/app/webhook-config.json
+    environment:
+      - PORT=3000
+      - MESSAGE_WEBHOOK_URL=${MESSAGE_WEBHOOK_URL:-/app/webhook-config.json}
+      - GROUP_EVENT_WEBHOOK_URL=${GROUP_EVENT_WEBHOOK_URL:-/app/webhook-config.json}
+      - REACTION_WEBHOOK_URL=${REACTION_WEBHOOK_URL:-/app/webhook-config.json}
+    networks:
+      - zalo-network
+
+networks:
+  zalo-network:
+    driver: bridge

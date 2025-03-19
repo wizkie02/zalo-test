@@ -1,6 +1,7 @@
 // ZaloNodes.ts
 
 import { IExecuteFunctions } from 'n8n-core';
+import * as zaloService from './zaloService';
 import {
 	INodeExecutionData,
 	INodeType,
@@ -63,7 +64,8 @@ export class FindUser implements INodeType {
 		};
 
 		const response = await this.helpers.request(`${baseUrl}/findUser`, options);
-		return this.helpers.returnJsonArray(JSON.parse(response));
+		const result = JSON.parse(response);
+		return this.helpers.returnJsonArray(result);
 	}
 }
 
@@ -122,7 +124,8 @@ export class GetUserInfo implements INodeType {
 		};
 
 		const response = await this.helpers.request(`${baseUrl}/getUserInfo`, options);
-		return this.helpers.returnJsonArray(JSON.parse(response));
+		const result = JSON.parse(response);
+		return this.helpers.returnJsonArray(result);
 	}
 }
 
@@ -181,7 +184,8 @@ export class SendFriendRequest implements INodeType {
 		};
 
 		const response = await this.helpers.request(`${baseUrl}/sendFriendRequest`, options);
-		return this.helpers.returnJsonArray(JSON.parse(response));
+		const result = JSON.parse(response);
+		return this.helpers.returnJsonArray(result);
 	}
 }
 
@@ -256,7 +260,8 @@ export class SendMessage implements INodeType {
 		};
 
 		const response = await this.helpers.request(`${baseUrl}/sendmessage`, options);
-		return this.helpers.returnJsonArray(JSON.parse(response));
+		const result = JSON.parse(response);
+		return this.helpers.returnJsonArray(result);
 	}
 }
 
@@ -333,7 +338,8 @@ export class CreateGroup implements INodeType {
 		};
 
 		const response = await this.helpers.request(`${baseUrl}/createGroup`, options);
-		return this.helpers.returnJsonArray(JSON.parse(response));
+		const result = JSON.parse(response);
+		return this.helpers.returnJsonArray(result);
 	}
 }
 
@@ -396,7 +402,8 @@ export class GetGroupInfo implements INodeType {
 		};
 
 		const response = await this.helpers.request(`${baseUrl}/getGroupInfo`, options);
-		return this.helpers.returnJsonArray(JSON.parse(response));
+		const result = JSON.parse(response);
+		return this.helpers.returnJsonArray(result);
 	}
 }
 
@@ -465,7 +472,8 @@ export class AddUserToGroup implements INodeType {
 		};
 
 		const response = await this.helpers.request(`${baseUrl}/addUserToGroup`, options);
-		return this.helpers.returnJsonArray(JSON.parse(response));
+		const result = JSON.parse(response);
+		return this.helpers.returnJsonArray(result);
 	}
 }
 
@@ -534,6 +542,7 @@ export class RemoveUserFromGroup implements INodeType {
 		};
 
 		const response = await this.helpers.request(`${baseUrl}/removeUserFromGroup`, options);
-		return this.helpers.returnJsonArray(JSON.parse(response));
+		const result = JSON.parse(response);
+		return this.helpers.returnJsonArray(result);
 	}
 }

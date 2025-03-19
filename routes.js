@@ -3,6 +3,7 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import WebSocket from 'ws';
 import { 
     findUser, 
     getUserInfo, 
@@ -18,7 +19,7 @@ import {
     sendImageToGroup,
     sendImagesToGroup
 } from './zaloService.js';
-import { PROXIES, addProxy, removeProxy } from './proxyService.js';
+import { proxyService } from './proxyService.js';
 
 const router = express.Router();
 // Dành cho ES Module: xác định __dirname
@@ -32,25 +33,18 @@ router.get('/', (req, res) => {
 
 // Trang nhập proxy và hiển thị form để đăng nhập qua QR code
 router.get('/login', (req, res) => {
-    res.send(`
-      <html>
-         <head>
-            <meta charset="UTF-8">
-            <title>Đăng nhập Zalo</title>
-         </head>
-         <body>
-            <h2>Nhập proxy và quét mã QR để đăng nhập</h2>
-            <form action="/login" method="post">
-                <label for="proxy">Proxy (nếu có):</label>
-                <input type="text" id="proxy" name="proxy" placeholder="http://user:pass@host:port" />
-                <button type="submit">Đăng nhập</button>
-            </form>
-         </body>
-      </html>
-    `);
+    const loginFile = path.join(__dirname, 'login.html');
+    fs.readFile(loginFile, 'utf8', (err, data) => {
+      if (err) {
+        console.error('Lỗi khi đọc file login.html:', err);
+        return res.status(500).send('Không thể tải trang đăng nhập.');
+      }
+      res.send(data);
+    });
 });
 
 // Xử lý đăng nhập: sử dụng proxy do người dùng nhập nếu hợp lệ, nếu không sẽ sử dụng proxy mặc định
+let loginResolve;
 router.post('/login', async (req, res) => {
     try {
         const { proxy } = req.body;
@@ -59,17 +53,24 @@ router.post('/login', async (req, res) => {
             <html>
                <head>
                   <meta charset="UTF-8">
+                  <meta charset="UTF-8">
                   <title>Quét mã QR</title>
                </head>
                <body>
                   <h2>Quét mã QR để đăng nhập</h2>
                   <img src="${qrCodeImage}" alt="QR Code"/>
-                //   <script>
-                //      // Giả sử sau 10 giây đăng nhập thành công, thay đổi giao diện
-                //      setTimeout(() => {
-                //         document.body.innerHTML = '<h2>Đăng nhập thành công!</h2>';
-                //      }, 10000);
-                //   </script>
+                  <script>
+                      const socket = new WebSocket('ws://localhost:3000');
+                      socket.onmessage = function(event) {
+                            console.log(event.data)
+                          if (event.data === 'login_success') {
+                              document.body.innerHTML = \`
+                                  <h2>Đăng nhập thành công!</h2>
+                                  <p style='color: green;'><b>Đăng nhập thành công!</b></p>
+                              \`;
+                          }
+                      };
+                  </script>
                </body>
             </html>
          `);
@@ -131,7 +132,7 @@ router.post('/updateWebhook', (req, res) => {
 // API quản lý proxy
 // Lấy danh sách proxy hiện có
 router.get('/proxies', (req, res) => {
-    res.json({ success: true, data: PROXIES });
+    res.json({ success: true, data: proxyService.getPROXIES() });
 });
 
 // Thêm một proxy mới
@@ -141,7 +142,7 @@ router.post('/proxies', (req, res) => {
         return res.status(400).json({ success: false, error: 'proxyUrl không hợp lệ' });
     }
     try {
-        const newProxy = addProxy(proxyUrl);
+        const newProxy = proxyService.addProxy(proxyUrl);
         res.json({ success: true, data: newProxy });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -155,7 +156,7 @@ router.delete('/proxies', (req, res) => {
         return res.status(400).json({ success: false, error: 'proxyUrl không hợp lệ' });
     }
     try {
-        removeProxy(proxyUrl);
+        proxyService.removeProxy(proxyUrl);
         res.json({ success: true, message: 'Xóa proxy thành công' });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
