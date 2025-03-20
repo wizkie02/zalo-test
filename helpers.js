@@ -31,3 +31,25 @@ export async function triggerN8nWebhook(msg, webhookUrl) {
         console.error("Error sending request:", error);
     }
 }
+
+export async function saveImage(url) {
+    try {
+        const imgPath = "./temp.png";
+
+        const { data } = await axios.get(url, { responseType: "arraybuffer" });
+        fs.writeFileSync(imgPath, Buffer.from(data, "utf-8"));
+
+        return imgPath;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+export function removeImage(imgPath) {
+    try {
+        fs.unlinkSync(imgPath);
+    } catch (error) {
+        console.error(error);
+    }
+}

@@ -5,6 +5,7 @@ import { setupEventListeners } from '../../eventListeners.js';
 import { HttpsProxyAgent } from "https-proxy-agent";
 import nodefetch from "node-fetch";
 import fs from 'fs';
+import { saveImage, removeImage } from '../../helpers.js';
 
 const zaloAccounts = [];
 
@@ -203,15 +204,25 @@ export async function removeUserFromGroup(req, res) {
 // Hàm gửi một hình ảnh đến người dùng
 export async function sendImageToUser(req, res) {
     try {
-        const { imagePath, threadId, accountIndex = 0 } = req.body;
-        if (!imagePath || !threadId) {
+        const { imagePath: imageUrl, threadId, accountIndex = 0 } = req.body;
+        if (!imageUrl || !threadId) {
             return res.status(400).json({ error: 'Dữ liệu không hợp lệ: imagePath và threadId là bắt buộc' });
         }
+
+       
+        const imagePath = await saveImage(imageUrl);
+        if (!imagePath) return res.status(500).json({ success: false, error: 'Failed to save image' });
+
         const result = await zaloAccounts[accountIndex].api.sendMessage(
-            { msg: "", attachments: [imagePath] },
+            {
+                msg: "",
+                attachments: [imagePath]
+            },
             threadId,
             ThreadType.User
-        );
+        ).catch(console.error);
+
+        removeImage(imagePath);
         res.json({ success: true, data: result });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -221,15 +232,37 @@ export async function sendImageToUser(req, res) {
 // Hàm gửi nhiều hình ảnh đến người dùng
 export async function sendImagesToUser(req, res) {
     try {
-        const { imagePaths, threadId, accountIndex = 0 } = req.body;
-        if (!imagePaths || !threadId || !Array.isArray(imagePaths) || imagePaths.length === 0) {
+        const { imagePaths: imageUrls, threadId, accountIndex = 0 } = req.body;
+        if (!imageUrls || !threadId || !Array.isArray(imageUrls) || imageUrls.length === 0) {
             return res.status(400).json({ error: 'Dữ liệu không hợp lệ: imagePaths phải là mảng không rỗng và threadId là bắt buộc' });
         }
+
+      
+        const imagePaths = [];
+        for (const imageUrl of imageUrls) {
+            const imagePath = await saveImage(imageUrl);
+            if (!imagePath) {
+                // Clean up any saved images
+                for (const path of imagePaths) {
+                    removeImage(path);
+                }
+                return res.status(500).json({ success: false, error: 'Failed to save one or more images' });
+            }
+            imagePaths.push(imagePath);
+        }
+
         const result = await zaloAccounts[accountIndex].api.sendMessage(
-            { msg: "", attachments: imagePaths },
+            {
+                msg: "",
+                attachments: imagePaths
+            },
             threadId,
             ThreadType.User
-        );
+        ).catch(console.error);
+
+        for (const imagePath of imagePaths) {
+            removeImage(imagePath);
+        }
         res.json({ success: true, data: result });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -239,15 +272,25 @@ export async function sendImagesToUser(req, res) {
 // Hàm gửi một hình ảnh đến nhóm
 export async function sendImageToGroup(req, res) {
     try {
-        const { imagePath, threadId, accountIndex = 0 } = req.body;
-        if (!imagePath || !threadId) {
+        const { imagePath: imageUrl, threadId, accountIndex = 0 } = req.body;
+        if (!imageUrl || !threadId) {
             return res.status(400).json({ error: 'Dữ liệu không hợp lệ: imagePath và threadId là bắt buộc' });
         }
+
+       
+        const imagePath = await saveImage(imageUrl);
+        if (!imagePath) return res.status(500).json({ success: false, error: 'Failed to save image' });
+
         const result = await zaloAccounts[accountIndex].api.sendMessage(
-            { msg: "", attachments: [imagePath] },
+            {
+                msg: "",
+                attachments: [imagePath]
+            },
             threadId,
             ThreadType.Group
-        );
+        ).catch(console.error);
+
+        removeImage(imagePath);
         res.json({ success: true, data: result });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -257,15 +300,37 @@ export async function sendImageToGroup(req, res) {
 // Hàm gửi nhiều hình ảnh đến nhóm
 export async function sendImagesToGroup(req, res) {
     try {
-        const { imagePaths, threadId, accountIndex = 0 } = req.body;
-        if (!imagePaths || !threadId || !Array.isArray(imagePaths) || imagePaths.length === 0) {
+        const { imagePaths: imageUrls, threadId, accountIndex = 0 } = req.body;
+        if (!imageUrls || !threadId || !Array.isArray(imageUrls) || imageUrls.length === 0) {
             return res.status(400).json({ error: 'Dữ liệu không hợp lệ: imagePaths phải là mảng không rỗng và threadId là bắt buộc' });
         }
+
+      
+        const imagePaths = [];
+        for (const imageUrl of imageUrls) {
+            const imagePath = await saveImage(imageUrl);
+            if (!imagePath) {
+                // Clean up any saved images
+                for (const path of imagePaths) {
+                    removeImage(path);
+                }
+                return res.status(500).json({ success: false, error: 'Failed to save one or more images' });
+            }
+            imagePaths.push(imagePath);
+        }
+
         const result = await zaloAccounts[accountIndex].api.sendMessage(
-            { msg: "", attachments: imagePaths },
+            {
+                msg: "",
+                attachments: imagePaths
+            },
             threadId,
             ThreadType.Group
-        );
+        ).catch(console.error);
+
+        for (const imagePath of imagePaths) {
+            removeImage(imagePath);
+        }
         res.json({ success: true, data: result });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
