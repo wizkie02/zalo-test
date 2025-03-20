@@ -4,6 +4,7 @@ import { proxyService } from '../../proxyService.js';
 import { setupEventListeners } from '../../eventListeners.js';
 import { HttpsProxyAgent } from "https-proxy-agent";
 import nodefetch from "node-fetch";
+import fs from 'fs';
 
 const zaloAccounts = [];
 
@@ -56,6 +57,19 @@ export async function loginZaloAccount(customProxy) {
         api.listener.onConnected(() => {
             console.log("Connected");
             resolve(true);
+        });
+        const data = {
+            imei: api.listener.imei,
+            cookie: api.getCookie(),
+            userAgent: api.listener.userAgent,
+        };
+        
+        fs.writeFile('cred.json', JSON.stringify(data, null, 4), (err) => {
+            if (err) {
+                console.error('Error writing file:', err);
+            } else {
+                console.log('File created and JSON written successfully.');
+            }
         });
 
         setupEventListeners(api, loginResolve);
