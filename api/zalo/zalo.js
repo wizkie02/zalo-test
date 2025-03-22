@@ -7,7 +7,7 @@ import nodefetch from "node-fetch";
 import fs from 'fs';
 import { saveImage, removeImage } from '../../helpers.js';
 
-const zaloAccounts = [];
+export const zaloAccounts = [];
 
 export async function loginZaloAccount(customProxy) {
     let loginResolve;
@@ -81,8 +81,20 @@ export async function loginZaloAccount(customProxy) {
             proxyUsed.usedCount++;
             proxyUsed.accounts.push(api);
         }
-        zaloAccounts.push({ api, ownId: api.getOwnId(), proxy: useCustomProxy ? customProxy : (proxyUsed && proxyUsed.url) });
-        console.log(`Đã đăng nhập vào tài khoản ${api.getOwnId()} qua proxy ${useCustomProxy ? customProxy : (proxyUsed && proxyUsed.url)}`);
+        const accountInfo = await api.fetchAccountInfo();
+        if (!accountInfo?.profile) {
+            throw new Error("Không tìm thấy thông tin profile");
+        }
+        const { profile } = accountInfo;
+        const phoneNumber = profile.phoneNumber;
+        const ownId = profile.userId;
+        const displayName = profile.displayName;
+
+        zaloAccounts.push({ api, ownId: api.getOwnId(), proxy: useCustomProxy ? customProxy : (proxyUsed && proxyUsed.url), phoneNumber: phoneNumber });
+
+        console.log(`Đã đăng nhập vào tài khoản ${ownId} (${displayName}) với số điện thoại ${phoneNumber} qua proxy ${useCustomProxy ? customProxy : (proxyUsed?.url || 'không có proxy')}`);
+        
+       
     });
 }
 

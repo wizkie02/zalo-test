@@ -27,6 +27,7 @@
         <li><a href="#sendImagesToUser">sendImagesToUser</a></li>
         <li><a href="#sendImageToGroup">sendImageToGroup</a></li>
         <li><a href="#sendImagesToGroup">sendImagesToGroup</a></li>
+        <li><a href="#accounts">accounts</a></li>
       </ol>
 
       <hr/>
@@ -252,6 +253,32 @@
   "imagePaths": ["./path/to/group-image1.jpg", "./path/to/group-image2.jpg"],
   "threadId": "0000000000000000000",
   "accountIndex": 0
+}
+      </pre>
+
+      <hr/>
+
+      <h3 id="accounts">13. accounts</h3>
+      <p><strong>Mục đích:</strong> Lấy danh sách tài khoản đã đăng nhập.</p>
+      <p><strong>Endpoint:</strong> GET /accounts</p>
+      <p><strong>Response:</strong></p>
+      <pre>
+// Nếu có tài khoản đã đăng nhập:
+[
+  {
+    "ownId": "0000000000000000001",
+    "proxy": "http://proxy.example.com"
+  },
+  {
+    "ownId": "0000000000000000002",
+    "proxy": null
+  }
+]
+
+// Nếu chưa có tài khoản nào đăng nhập:
+{
+  "success": true,
+  "message": "Chưa có tài khoản nào đăng nhập"
 }
       </pre>
 
