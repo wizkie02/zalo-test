@@ -27,6 +27,7 @@
         <li><a href="#sendImagesToUser">sendImagesToUser</a></li>
         <li><a href="#sendImageToGroup">sendImageToGroup</a></li>
         <li><a href="#sendImagesToGroup">sendImagesToGroup</a></li>
+        <li><a href="#accounts">accounts</a></li>
       </ol>
 
       <hr/>
@@ -47,6 +48,13 @@
   "accountIndex": 0
 }
       </pre>
+      <p><strong>Ví dụ curl:</strong></p>
+      <pre>
+curl -X POST -H "Content-Type: application/json" -d '{
+  "phone": "0123456789",
+  "accountIndex": 0
+}' http://localhost:3000/findUser
+      </pre>
 
       <hr/>
 
@@ -64,6 +72,13 @@
   "accountIndex": 0
 }
       </pre>
+      <p><strong>Ví dụ curl:</strong></p>
+      <pre>
+curl -X POST -H "Content-Type: application/json" -d '{
+  "userId": "0000000000000000001",
+  "accountIndex": 0
+}' http://localhost:3000/getUserInfo
+      </pre>
 
       <hr/>
 
@@ -80,6 +95,13 @@
   "userId": "0000000000000000002",
   "accountIndex": 0
 }
+      </pre>
+      <p><strong>Ví dụ curl:</strong></p>
+      <pre>
+curl -X POST -H "Content-Type: application/json" -d '{
+  "userId": "0000000000000000002",
+  "accountIndex": 0
+}' http://localhost:3000/sendFriendRequest
       </pre>
 
       <hr/>
@@ -102,6 +124,24 @@
   "accountIndex": 0
 }
       </pre>
+      <p><strong>Ví dụ curl:</strong></p>
+      <pre>
+curl -X POST -H "Content-Type: application/json" -d '{
+  "message": "Xin chào",
+  "threadId": "0000000000000000001",
+  "type": "User",
+  "accountIndex": 0
+}' http://localhost:3000/sendmessage
+      </pre>
+      <p><strong>Ví dụ curl:</strong></p>
+      <pre>
+curl -X POST -H "Content-Type: application/json" -d '{
+  "members": ["0000000000000000002", "0000000000000000003"],
+  "name": "Nhóm Mới",
+  "avatarPath": "./avatar.jpg",
+  "accountIndex": 0
+}' http://localhost:3000/createGroup
+      </pre>
 
       <hr/>
 
@@ -123,6 +163,13 @@
   "accountIndex": 0
 }
       </pre>
+      <p><strong>Ví dụ curl:</strong></p>
+      <pre>
+curl -X POST -H "Content-Type: application/json" -d '{
+  "groupId": "0000000000000000000",
+  "accountIndex": 0
+}' http://localhost:3000/getGroupInfo
+      </pre>
 
       <hr/>
 
@@ -139,6 +186,22 @@
   "groupId": "0000000000000000000",
   "accountIndex": 0
 }
+      </pre>
+      <p><strong>Ví dụ curl:</strong></p>
+      <pre>
+curl -X POST -H "Content-Type: application/json" -d '{
+  "groupId": "0000000000000000000",
+  "memberId": ["0000000000000000001", "0000000000000000002"],
+  "accountIndex": 0
+}' http://localhost:3000/addUserToGroup
+      </pre>
+      <p><strong>Ví dụ curl:</strong></p>
+      <pre>
+curl -X POST -H "Content-Type: application/json" -d '{
+  "groupId": "0000000000000000000",
+  "memberId": ["0000000000000000001", "0000000000000000002"],
+  "accountIndex": 0
+}' http://localhost:3000/removeUserFromGroup
       </pre>
 
       <hr/>
@@ -159,6 +222,22 @@
   "accountIndex": 0
 }
       </pre>
+      <p><strong>Ví dụ curl:</strong></p>
+      <pre>
+curl -X POST -H "Content-Type: application/json" -d '{
+  "imagePath": "./path/to/image.jpg",
+  "threadId": "0000000000000000001",
+  "accountIndex": 0
+}' http://localhost:3000/sendImageToUser
+      </pre>
+      <p><strong>Ví dụ curl:</strong></p>
+      <pre>
+curl -X POST -H "Content-Type: application/json" -d '{
+  "imagePaths": ["./path/to/image1.jpg", "./path/to/image2.jpg"],
+  "threadId": "0000000000000000001",
+  "accountIndex": 0
+}' http://localhost:3000/sendImagesToUser
+      </pre>
 
       <hr/>
 
@@ -177,6 +256,22 @@
   "memberId": ["0000000000000000001", "0000000000000000002"],
   "accountIndex": 0
 }
+      </pre>
+      <p><strong>Ví dụ curl:</strong></p>
+      <pre>
+curl -X POST -H "Content-Type: application/json" -d '{
+  "imagePath": "./path/to/group-image.jpg",
+  "threadId": "0000000000000000000",
+  "accountIndex": 0
+}' http://localhost:3000/sendImageToGroup
+      </pre>
+      <p><strong>Ví dụ curl:</strong></p>
+      <pre>
+curl -X POST -H "Content-Type: application/json" -d '{
+  "imagePaths": ["./path/to/group-image1.jpg", "./path/to/group-image2.jpg"],
+  "threadId": "0000000000000000000",
+  "accountIndex": 0
+}' http://localhost:3000/sendImagesToGroup
       </pre>
 
       <hr/>
@@ -253,6 +348,36 @@
   "threadId": "0000000000000000000",
   "accountIndex": 0
 }
+      </pre>
+
+      <hr/>
+
+      <h3 id="accounts">13. accounts</h3>
+      <p><strong>Mục đích:</strong> Lấy danh sách tài khoản đã đăng nhập.</p>
+      <p><strong>Endpoint:</strong> GET /accounts</p>
+      <p><strong>Response:</strong></p>
+      <pre>
+// Nếu có tài khoản đã đăng nhập:
+[
+  {
+    "ownId": "0000000000000000001",
+    "proxy": "http://proxy.example.com"
+  },
+  {
+    "ownId": "0000000000000000002",
+    "proxy": null
+  }
+]
+
+// Nếu chưa có tài khoản nào đăng nhập:
+{
+  "success": true,
+  "message": "Chưa có tài khoản nào đăng nhập"
+}
+      </pre>
+      <p><strong>Ví dụ curl:</strong></p>
+      <pre>
+curl http://localhost:3000/accounts
       </pre>
 
     </body>

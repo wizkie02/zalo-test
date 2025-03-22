@@ -19,6 +19,7 @@ import {
     sendImageToGroup,
     sendImagesToGroup
 } from './zaloService.js';
+import { zaloAccounts } from './api/zalo/zalo.js';
 import { proxyService } from './proxyService.js';
 
 const router = express.Router();
@@ -174,5 +175,38 @@ router.get('/list', (req, res) => {
       res.send(data);
     });
   });
+
+// Lấy danh sách tài khoản đã đăng nhập
+router.get('/accounts', (req, res) => {
+    if (zaloAccounts.length === 0) {
+        return res.json({ success: true, message: 'Chưa có tài khoản nào đăng nhập' });
+    }
+    const accounts = zaloAccounts.map(account => ({
+        ownId: account.ownId,
+        proxy: account.proxy,
+        phoneNumber: account.phoneNumber || 'N/A',
+        accountIndex: zaloAccounts.indexOf(account)
+    }));
+
+    // Tạo bảng HTML
+    let html = '<table border="1">';
+    html += '<thead><tr>';
+    const headers = ['Index', 'Own ID', 'Phone Number', 'Proxy'];
+    headers.forEach(header => {
+        html += `<th>${header}</th>`;
+    });
+    html += '</tr></thead><tbody>';
+    accounts.forEach((account, index) => {
+        html += '<tr>';
+        html += `<td>${index}</td>`;
+        html += `<td>${account.ownId}</td>`;
+        html += `<td>${account.phoneNumber || 'N/A'}</td>`;
+        html += `<td>${account.proxy}</td>`;
+        html += '</tr>';
+    });
+    html += '</tbody></table>';
+
+    res.send(html);
+});
 
 export default router;
