@@ -38,21 +38,31 @@
       <p><strong>Parameters:</strong></p>
       <table>
         <tr><th>Field</th><th>Loại</th><th>Mô tả</th><th>Bắt buộc</th></tr>
-        <tr><td>phone</td><td>string</td><td>Số điện thoại của người dùng.</td><td>Có</td></tr>
-        <tr><td>accountIndex</td><td>number</td><td>Chỉ số tài khoản (mặc định 0).</td><td>Không</td></tr>
+        <tr>
+          <td>phone</td>
+          <td>string</td>
+          <td>Số điện thoại của người dùng.</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>ownId</td>
+          <td>string</td>
+          <td>ID tài khoản Zalo đang đăng nhập (lấy từ /accounts).</td>
+          <td>Có</td>
+        </tr>
       </table>
       <p><strong>Ví dụ:</strong></p>
       <pre>
 {
   "phone": "0123456789",
-  "accountIndex": 0
+  "ownId": "0000000000000000001"
 }
       </pre>
       <p><strong>Ví dụ curl:</strong></p>
       <pre>
 curl -X POST -H "Content-Type: application/json" -d '{
   "phone": "0123456789",
-  "accountIndex": 0
+  "ownId": "0000000000000000001"
 }' http://localhost:3000/findUser
       </pre>
 
@@ -63,20 +73,30 @@ curl -X POST -H "Content-Type: application/json" -d '{
       <p><strong>Endpoint:</strong> POST /getUserInfo</p>
       <table>
         <tr><th>Field</th><th>Loại</th><th>Mô tả</th><th>Bắt buộc</th></tr>
-        <tr><td>userId</td><td>string</td><td>ID của người dùng.</td><td>Có</td></tr>
-        <tr><td>accountIndex</td><td>number</td><td>Chỉ số tài khoản (mặc định 0).</td><td>Không</td></tr>
+        <tr>
+          <td>userId</td>
+          <td>string</td>
+          <td>ID của người dùng cần lấy thông tin.</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>ownId</td>
+          <td>string</td>
+          <td>ID tài khoản Zalo đang đăng nhập (lấy từ /accounts).</td>
+          <td>Có</td>
+        </tr>
       </table>
       <pre>
 {
   "userId": "0000000000000000001",
-  "accountIndex": 0
+  "ownId": "0000000000000000009"
 }
       </pre>
       <p><strong>Ví dụ curl:</strong></p>
       <pre>
 curl -X POST -H "Content-Type: application/json" -d '{
   "userId": "0000000000000000001",
-  "accountIndex": 0
+  "ownId": "0000000000000000009"
 }' http://localhost:3000/getUserInfo
       </pre>
 
@@ -87,41 +107,71 @@ curl -X POST -H "Content-Type: application/json" -d '{
       <p><strong>Endpoint:</strong> POST /sendFriendRequest</p>
       <table>
         <tr><th>Field</th><th>Loại</th><th>Mô tả</th><th>Bắt buộc</th></tr>
-        <tr><td>userId</td><td>string</td><td>ID của người dùng nhận lời mời.</td><td>Có</td></tr>
-        <tr><td>accountIndex</td><td>number</td><td>Chỉ số tài khoản (mặc định 0).</td><td>Không</td></tr>
+        <tr>
+          <td>userId</td>
+          <td>string</td>
+          <td>ID của người dùng nhận lời mời.</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>ownId</td>
+          <td>string</td>
+          <td>ID tài khoản Zalo đang đăng nhập (lấy từ /accounts).</td>
+          <td>Có</td>
+        </tr>
       </table>
       <pre>
 {
   "userId": "0000000000000000002",
-  "accountIndex": 0
+  "ownId": "0000000000000000001"
 }
       </pre>
       <p><strong>Ví dụ curl:</strong></p>
       <pre>
 curl -X POST -H "Content-Type: application/json" -d '{
   "userId": "0000000000000000002",
-  "accountIndex": 0
+  "ownId": "0000000000000000001"
 }' http://localhost:3000/sendFriendRequest
       </pre>
 
       <hr/>
 
       <h3 id="sendMessage">4. sendMessage</h3>
-      <p><strong>Mục đích:</strong> Gửi tin nhắn văn bản đến người dùng hoặc nhóm.</p>
+      <p><strong>Mục đích:</strong> Gửi tin nhắn văn bản (hoặc object) đến người dùng hoặc nhóm.</p>
       <p><strong>Endpoint:</strong> POST /sendmessage</p>
       <table>
         <tr><th>Field</th><th>Loại</th><th>Mô tả</th><th>Bắt buộc</th></tr>
-        <tr><td>message</td><td>string | Object</td><td>Nội dung tin nhắn hoặc object MessageContent.</td><td>Có</td></tr>
-        <tr><td>threadId</td><td>string</td><td>ID của người dùng/nhóm.</td><td>Có</td></tr>
-        <tr><td>type</td><td>string</td><td>Loại thread ("User" hoặc "Group").</td><td>Không</td></tr>
-        <tr><td>accountIndex</td><td>number</td><td>Chỉ số tài khoản (mặc định 0).</td><td>Không</td></tr>
+        <tr>
+          <td>message</td>
+          <td>string | Object</td>
+          <td>Nội dung tin nhắn (có thể là string hoặc object MessageContent).</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>threadId</td>
+          <td>string</td>
+          <td>ID của người dùng/nhóm để gửi tin.</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>type</td>
+          <td>string</td>
+          <td>Loại thread ("User" hoặc "Group"). Mặc định là "User".</td>
+          <td>Không</td>
+        </tr>
+        <tr>
+          <td>ownId</td>
+          <td>string</td>
+          <td>ID tài khoản Zalo đang đăng nhập (lấy từ /accounts).</td>
+          <td>Có</td>
+        </tr>
       </table>
       <pre>
 {
   "message": "Xin chào",
   "threadId": "0000000000000000001",
   "type": "User",
-  "accountIndex": 0
+  "ownId": "0000000000000000009"
 }
       </pre>
       <p><strong>Ví dụ curl:</strong></p>
@@ -130,17 +180,8 @@ curl -X POST -H "Content-Type: application/json" -d '{
   "message": "Xin chào",
   "threadId": "0000000000000000001",
   "type": "User",
-  "accountIndex": 0
+  "ownId": "0000000000000000009"
 }' http://localhost:3000/sendmessage
-      </pre>
-      <p><strong>Ví dụ curl:</strong></p>
-      <pre>
-curl -X POST -H "Content-Type: application/json" -d '{
-  "members": ["0000000000000000002", "0000000000000000003"],
-  "name": "Nhóm Mới",
-  "avatarPath": "./avatar.jpg",
-  "accountIndex": 0
-}' http://localhost:3000/createGroup
       </pre>
 
       <hr/>
@@ -150,25 +191,47 @@ curl -X POST -H "Content-Type: application/json" -d '{
       <p><strong>Endpoint:</strong> POST /createGroup</p>
       <table>
         <tr><th>Field</th><th>Loại</th><th>Mô tả</th><th>Bắt buộc</th></tr>
-        <tr><td>members</td><td>string[]</td><td>Mảng ID các thành viên (không bao gồm bản thân).</td><td>Có</td></tr>
-        <tr><td>name</td><td>string</td><td>Tên của nhóm.</td><td>Không</td></tr>
-        <tr><td>avatarPath</td><td>string</td><td>Đường dẫn ảnh nhóm.</td><td>Không</td></tr>
-        <tr><td>accountIndex</td><td>number</td><td>Chỉ số tài khoản (mặc định 0).</td><td>Không</td></tr>
+        <tr>
+          <td>members</td>
+          <td>string[]</td>
+          <td>Mảng ID các thành viên (không bao gồm bản thân).</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>name</td>
+          <td>string</td>
+          <td>Tên của nhóm.</td>
+          <td>Không</td>
+        </tr>
+        <tr>
+          <td>avatarPath</td>
+          <td>string</td>
+          <td>Đường dẫn ảnh nhóm (nếu có).</td>
+          <td>Không</td>
+        </tr>
+        <tr>
+          <td>ownId</td>
+          <td>string</td>
+          <td>ID tài khoản Zalo đang đăng nhập (lấy từ /accounts).</td>
+          <td>Có</td>
+        </tr>
       </table>
       <pre>
 {
   "members": ["0000000000000000002", "0000000000000000003"],
   "name": "Nhóm Mới",
   "avatarPath": "./avatar.jpg",
-  "accountIndex": 0
+  "ownId": "0000000000000000001"
 }
       </pre>
       <p><strong>Ví dụ curl:</strong></p>
       <pre>
 curl -X POST -H "Content-Type: application/json" -d '{
-  "groupId": "0000000000000000000",
-  "accountIndex": 0
-}' http://localhost:3000/getGroupInfo
+  "members": ["0000000000000000002", "0000000000000000003"],
+  "name": "Nhóm Mới",
+  "avatarPath": "./avatar.jpg",
+  "ownId": "0000000000000000001"
+}' http://localhost:3000/createGroup
       </pre>
 
       <hr/>
@@ -178,30 +241,31 @@ curl -X POST -H "Content-Type: application/json" -d '{
       <p><strong>Endpoint:</strong> POST /getGroupInfo</p>
       <table>
         <tr><th>Field</th><th>Loại</th><th>Mô tả</th><th>Bắt buộc</th></tr>
-        <tr><td>groupId</td><td>string | string[]</td><td>ID của nhóm hoặc mảng các ID.</td><td>Có</td></tr>
-        <tr><td>accountIndex</td><td>number</td><td>Chỉ số tài khoản (mặc định 0).</td><td>Không</td></tr>
+        <tr>
+          <td>groupId</td>
+          <td>string | string[]</td>
+          <td>ID của nhóm hoặc mảng các ID.</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>ownId</td>
+          <td>string</td>
+          <td>ID tài khoản Zalo đang đăng nhập (lấy từ /accounts).</td>
+          <td>Có</td>
+        </tr>
       </table>
       <pre>
 {
   "groupId": "0000000000000000000",
-  "accountIndex": 0
+  "ownId": "0000000000000000009"
 }
       </pre>
       <p><strong>Ví dụ curl:</strong></p>
       <pre>
 curl -X POST -H "Content-Type: application/json" -d '{
   "groupId": "0000000000000000000",
-  "memberId": ["0000000000000000001", "0000000000000000002"],
-  "accountIndex": 0
-}' http://localhost:3000/addUserToGroup
-      </pre>
-      <p><strong>Ví dụ curl:</strong></p>
-      <pre>
-curl -X POST -H "Content-Type: application/json" -d '{
-  "groupId": "0000000000000000000",
-  "memberId": ["0000000000000000001", "0000000000000000002"],
-  "accountIndex": 0
-}' http://localhost:3000/removeUserFromGroup
+  "ownId": "0000000000000000009"
+}' http://localhost:3000/getGroupInfo
       </pre>
 
       <hr/>
@@ -211,32 +275,39 @@ curl -X POST -H "Content-Type: application/json" -d '{
       <p><strong>Endpoint:</strong> POST /addUserToGroup</p>
       <table>
         <tr><th>Field</th><th>Loại</th><th>Mô tả</th><th>Bắt buộc</th></tr>
-        <tr><td>groupId</td><td>string</td><td>ID của nhóm.</td><td>Có</td></tr>
-        <tr><td>memberId</td><td>string | string[]</td><td>ID của thành viên (hoặc mảng ID) cần thêm.</td><td>Có</td></tr>
-        <tr><td>accountIndex</td><td>number</td><td>Chỉ số tài khoản (mặc định 0).</td><td>Không</td></tr>
+        <tr>
+          <td>groupId</td>
+          <td>string</td>
+          <td>ID của nhóm.</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>memberId</td>
+          <td>string | string[]</td>
+          <td>ID của thành viên (hoặc mảng ID) cần thêm vào nhóm.</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>ownId</td>
+          <td>string</td>
+          <td>ID tài khoản Zalo đang đăng nhập (lấy từ /accounts).</td>
+          <td>Có</td>
+        </tr>
       </table>
       <pre>
 {
   "groupId": "0000000000000000000",
   "memberId": ["0000000000000000001", "0000000000000000002"],
-  "accountIndex": 0
+  "ownId": "0000000000000000009"
 }
       </pre>
       <p><strong>Ví dụ curl:</strong></p>
       <pre>
 curl -X POST -H "Content-Type: application/json" -d '{
-  "imagePath": "./path/to/image.jpg",
-  "threadId": "0000000000000000001",
-  "accountIndex": 0
-}' http://localhost:3000/sendImageToUser
-      </pre>
-      <p><strong>Ví dụ curl:</strong></p>
-      <pre>
-curl -X POST -H "Content-Type: application/json" -d '{
-  "imagePaths": ["./path/to/image1.jpg", "./path/to/image2.jpg"],
-  "threadId": "0000000000000000001",
-  "accountIndex": 0
-}' http://localhost:3000/sendImagesToUser
+  "groupId": "0000000000000000000",
+  "memberId": ["0000000000000000001", "0000000000000000002"],
+  "ownId": "0000000000000000009"
+}' http://localhost:3000/addUserToGroup
       </pre>
 
       <hr/>
@@ -246,32 +317,39 @@ curl -X POST -H "Content-Type: application/json" -d '{
       <p><strong>Endpoint:</strong> POST /removeUserFromGroup</p>
       <table>
         <tr><th>Field</th><th>Loại</th><th>Mô tả</th><th>Bắt buộc</th></tr>
-        <tr><td>groupId</td><td>string</td><td>ID của nhóm.</td><td>Có</td></tr>
-        <tr><td>memberId</td><td>string | string[]</td><td>ID của thành viên (hoặc mảng ID) cần xóa.</td><td>Có</td></tr>
-        <tr><td>accountIndex</td><td>number</td><td>Chỉ số tài khoản (mặc định 0).</td><td>Không</td></tr>
+        <tr>
+          <td>groupId</td>
+          <td>string</td>
+          <td>ID của nhóm.</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>memberId</td>
+          <td>string | string[]</td>
+          <td>ID của thành viên (hoặc mảng ID) cần xóa khỏi nhóm.</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>ownId</td>
+          <td>string</td>
+          <td>ID tài khoản Zalo đang đăng nhập (lấy từ /accounts).</td>
+          <td>Có</td>
+        </tr>
       </table>
       <pre>
 {
   "groupId": "0000000000000000000",
   "memberId": ["0000000000000000001", "0000000000000000002"],
-  "accountIndex": 0
+  "ownId": "0000000000000000009"
 }
       </pre>
       <p><strong>Ví dụ curl:</strong></p>
       <pre>
 curl -X POST -H "Content-Type: application/json" -d '{
-  "imagePath": "./path/to/group-image.jpg",
-  "threadId": "0000000000000000000",
-  "accountIndex": 0
-}' http://localhost:3000/sendImageToGroup
-      </pre>
-      <p><strong>Ví dụ curl:</strong></p>
-      <pre>
-curl -X POST -H "Content-Type: application/json" -d '{
-  "imagePaths": ["./path/to/group-image1.jpg", "./path/to/group-image2.jpg"],
-  "threadId": "0000000000000000000",
-  "accountIndex": 0
-}' http://localhost:3000/sendImagesToGroup
+  "groupId": "0000000000000000000",
+  "memberId": ["0000000000000000001", "0000000000000000002"],
+  "ownId": "0000000000000000009"
+}' http://localhost:3000/removeUserFromGroup
       </pre>
 
       <hr/>
@@ -281,16 +359,39 @@ curl -X POST -H "Content-Type: application/json" -d '{
       <p><strong>Endpoint:</strong> POST /sendImageToUser</p>
       <table>
         <tr><th>Field</th><th>Loại</th><th>Mô tả</th><th>Bắt buộc</th></tr>
-        <tr><td>imagePath</td><td>string</td><td>Đường dẫn đến hình ảnh cần gửi.</td><td>Có</td></tr>
-        <tr><td>threadId</td><td>string</td><td>ID của người dùng nhận tin nhắn.</td><td>Có</td></tr>
-        <tr><td>accountIndex</td><td>number</td><td>Chỉ số tài khoản (mặc định 0).</td><td>Không</td></tr>
+        <tr>
+          <td>imagePath</td>
+          <td>string</td>
+          <td>Đường dẫn hoặc URL đến hình ảnh cần gửi.</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>threadId</td>
+          <td>string</td>
+          <td>ID của người dùng nhận tin nhắn.</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>ownId</td>
+          <td>string</td>
+          <td>ID tài khoản Zalo đang đăng nhập (lấy từ /accounts).</td>
+          <td>Có</td>
+        </tr>
       </table>
       <pre>
 {
   "imagePath": "./path/to/image.jpg",
   "threadId": "0000000000000000001",
-  "accountIndex": 0
+  "ownId": "0000000000000000009"
 }
+      </pre>
+      <p><strong>Ví dụ curl:</strong></p>
+      <pre>
+curl -X POST -H "Content-Type: application/json" -d '{
+  "imagePath": "./path/to/image.jpg",
+  "threadId": "0000000000000000001",
+  "ownId": "0000000000000000009"
+}' http://localhost:3000/sendImageToUser
       </pre>
 
       <hr/>
@@ -300,16 +401,39 @@ curl -X POST -H "Content-Type: application/json" -d '{
       <p><strong>Endpoint:</strong> POST /sendImagesToUser</p>
       <table>
         <tr><th>Field</th><th>Loại</th><th>Mô tả</th><th>Bắt buộc</th></tr>
-        <tr><td>imagePaths</td><td>string[]</td><td>Mảng đường dẫn hình ảnh.</td><td>Có</td></tr>
-        <tr><td>threadId</td><td>string</td><td>ID của người dùng nhận tin nhắn.</td><td>Có</td></tr>
-        <tr><td>accountIndex</td><td>number</td><td>Chỉ số tài khoản (mặc định 0).</td><td>Không</td></tr>
+        <tr>
+          <td>imagePaths</td>
+          <td>string[]</td>
+          <td>Mảng đường dẫn hoặc URL hình ảnh.</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>threadId</td>
+          <td>string</td>
+          <td>ID của người dùng nhận tin nhắn.</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>ownId</td>
+          <td>string</td>
+          <td>ID tài khoản Zalo đang đăng nhập (lấy từ /accounts).</td>
+          <td>Có</td>
+        </tr>
       </table>
       <pre>
 {
   "imagePaths": ["./path/to/image1.jpg", "./path/to/image2.jpg"],
   "threadId": "0000000000000000001",
-  "accountIndex": 0
+  "ownId": "0000000000000000009"
 }
+      </pre>
+      <p><strong>Ví dụ curl:</strong></p>
+      <pre>
+curl -X POST -H "Content-Type: application/json" -d '{
+  "imagePaths": ["./path/to/image1.jpg", "./path/to/image2.jpg"],
+  "threadId": "0000000000000000001",
+  "ownId": "0000000000000000009"
+}' http://localhost:3000/sendImagesToUser
       </pre>
 
       <hr/>
@@ -319,16 +443,39 @@ curl -X POST -H "Content-Type: application/json" -d '{
       <p><strong>Endpoint:</strong> POST /sendImageToGroup</p>
       <table>
         <tr><th>Field</th><th>Loại</th><th>Mô tả</th><th>Bắt buộc</th></tr>
-        <tr><td>imagePath</td><td>string</td><td>Đường dẫn đến hình ảnh cần gửi.</td><td>Có</td></tr>
-        <tr><td>threadId</td><td>string</td><td>ID của nhóm nhận tin nhắn.</td><td>Có</td></tr>
-        <tr><td>accountIndex</td><td>number</td><td>Chỉ số tài khoản (mặc định 0).</td><td>Không</td></tr>
+        <tr>
+          <td>imagePath</td>
+          <td>string</td>
+          <td>Đường dẫn hoặc URL đến hình ảnh cần gửi.</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>threadId</td>
+          <td>string</td>
+          <td>ID của nhóm nhận tin nhắn.</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>ownId</td>
+          <td>string</td>
+          <td>ID tài khoản Zalo đang đăng nhập (lấy từ /accounts).</td>
+          <td>Có</td>
+        </tr>
       </table>
       <pre>
 {
   "imagePath": "./path/to/group-image.jpg",
   "threadId": "0000000000000000000",
-  "accountIndex": 0
+  "ownId": "0000000000000000009"
 }
+      </pre>
+      <p><strong>Ví dụ curl:</strong></p>
+      <pre>
+curl -X POST -H "Content-Type: application/json" -d '{
+  "imagePath": "./path/to/group-image.jpg",
+  "threadId": "0000000000000000000",
+  "ownId": "0000000000000000009"
+}' http://localhost:3000/sendImageToGroup
       </pre>
 
       <hr/>
@@ -338,16 +485,39 @@ curl -X POST -H "Content-Type: application/json" -d '{
       <p><strong>Endpoint:</strong> POST /sendImagesToGroup</p>
       <table>
         <tr><th>Field</th><th>Loại</th><th>Mô tả</th><th>Bắt buộc</th></tr>
-        <tr><td>imagePaths</td><td>string[]</td><td>Mảng đường dẫn hình ảnh.</td><td>Có</td></tr>
-        <tr><td>threadId</td><td>string</td><td>ID của nhóm nhận tin nhắn.</td><td>Có</td></tr>
-        <tr><td>accountIndex</td><td>number</td><td>Chỉ số tài khoản (mặc định 0).</td><td>Không</td></tr>
+        <tr>
+          <td>imagePaths</td>
+          <td>string[]</td>
+          <td>Mảng đường dẫn hoặc URL hình ảnh.</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>threadId</td>
+          <td>string</td>
+          <td>ID của nhóm nhận tin nhắn.</td>
+          <td>Có</td>
+        </tr>
+        <tr>
+          <td>ownId</td>
+          <td>string</td>
+          <td>ID tài khoản Zalo đang đăng nhập (lấy từ /accounts).</td>
+          <td>Có</td>
+        </tr>
       </table>
       <pre>
 {
   "imagePaths": ["./path/to/group-image1.jpg", "./path/to/group-image2.jpg"],
   "threadId": "0000000000000000000",
-  "accountIndex": 0
+  "ownId": "0000000000000000009"
 }
+      </pre>
+      <p><strong>Ví dụ curl:</strong></p>
+      <pre>
+curl -X POST -H "Content-Type: application/json" -d '{
+  "imagePaths": ["./path/to/group-image1.jpg", "./path/to/group-image2.jpg"],
+  "threadId": "0000000000000000000",
+  "ownId": "0000000000000000009"
+}' http://localhost:3000/sendImagesToGroup
       </pre>
 
       <hr/>
@@ -357,15 +527,18 @@ curl -X POST -H "Content-Type: application/json" -d '{
       <p><strong>Endpoint:</strong> GET /accounts</p>
       <p><strong>Response:</strong></p>
       <pre>
-// Nếu có tài khoản đã đăng nhập:
+// Nếu có tài khoản đã đăng nhập, dữ liệu trả về sẽ hiển thị dạng bảng.
+// Ví dụ (dạng JSON thuần):
 [
   {
     "ownId": "0000000000000000001",
-    "proxy": "http://proxy.example.com"
+    "proxy": "http://proxy.example.com",
+    "phoneNumber": "0123456789"
   },
   {
     "ownId": "0000000000000000002",
-    "proxy": null
+    "proxy": null,
+    "phoneNumber": "N/A"
   }
 ]
 

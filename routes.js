@@ -185,26 +185,26 @@ router.get('/accounts', (req, res) => {
         ownId: account.ownId,
         proxy: account.proxy,
         phoneNumber: account.phoneNumber || 'N/A',
-        accountIndex: zaloAccounts.indexOf(account)
     }));
+    
 
     // Tạo bảng HTML
     let html = '<table border="1">';
     html += '<thead><tr>';
-    const headers = ['Index', 'Own ID', 'Phone Number', 'Proxy'];
+    const headers = ['Own ID', 'Phone Number', 'Proxy'];
     headers.forEach(header => {
         html += `<th>${header}</th>`;
     });
     html += '</tr></thead><tbody>';
-    accounts.forEach((account, index) => {
+    accounts.forEach((account) => {
         html += '<tr>';
-        html += `<td>${index}</td>`;
         html += `<td>${account.ownId}</td>`;
         html += `<td>${account.phoneNumber || 'N/A'}</td>`;
         html += `<td>${account.proxy}</td>`;
         html += '</tr>';
     });
     html += '</tbody></table>';
+    
 
     res.send(html);
 });
