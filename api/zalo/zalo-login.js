@@ -7,7 +7,7 @@ import nodefetch from "node-fetch";
 import fs from 'fs';
 import { zaloAccounts } from './zalo.js';
 
-export async function loginZaloAccount(customProxy) {
+export async function loginZaloAccount(customProxy, cred) {
     let loginResolve;
     return new Promise(async (resolve, reject) => {
         loginResolve = resolve;
@@ -44,33 +44,38 @@ export async function loginZaloAccount(customProxy) {
             polyfill: nodefetch,
         });
 
-        const api = await zalo.loginQR(null, (qrData) => {
-            if (qrData?.data?.image) {
-                const qrCodeImage = `data:image/png;base64,${qrData.data.image}`;
-                resolve(qrCodeImage);
-            } else {
-                reject(new Error("Không thể lấy mã QR"));
+        let api;
+        if (cred) {
+            try {
+                api = await zalo.login(cred);
+            } catch (error) {
+                console.error("Lỗi khi đăng nhập bằng cookie:", error);
+                // If cookie login fails, attempt QR code login
+                api = await zalo.loginQR(null, (qrData) => {
+                    if (qrData?.data?.image) {
+                        const qrCodeImage = `data:image/png;base64,${qrData.data.image}`;
+                        resolve(qrCodeImage);
+                    } else {
+                        reject(new Error("Không thể lấy mã QR"));
+                    }
+                });
             }
-        });
+        } else {
+            api = await zalo.loginQR(null, (qrData) => {
+                if (qrData?.data?.image) {
+                    const qrCodeImage = `data:image/png;base64,${qrData.data.image}`;
+                    resolve(qrCodeImage);
+                } else {
+                    reject(new Error("Không thể lấy mã QR"));
+                }
+            });
+        }
 
         api.listener.onConnected(() => {
             console.log("Connected");
             resolve(true);
         });
-        const data = {
-            imei: api.listener.imei,
-            cookie: api.getCookie(),
-            userAgent: api.listener.userAgent,
-        };
-        
-        fs.writeFile('cred.json', JSON.stringify(data, null, 4), (err) => {
-            if (err) {
-                console.error('Error writing file:', err);
-            } else {
-                console.log('File created and JSON written successfully.');
-            }
-        });
-
+       
         setupEventListeners(api, loginResolve);
         api.listener.start();
 
@@ -96,6 +101,25 @@ export async function loginZaloAccount(customProxy) {
             // Thêm tài khoản mới nếu không tìm thấy tài khoản cũ
             zaloAccounts.push({ ownId: api.getOwnId(), proxy: useCustomProxy ? customProxy : (proxyUsed && proxyUsed.url), phoneNumber: phoneNumber });
         }
+
+        const context = await api.getContext();
+        const {imei, cookie, userAgent} = context;
+        const data = {
+            imei: imei,
+            cookie: cookie,
+            userAgent: userAgent,
+        }
+        const cookiesDir = './cookies';
+        if (!fs.existsSync(cookiesDir)) {
+            fs.mkdirSync(cookiesDir);
+        }
+        fs.writeFile(`${cookiesDir}/cred_${ownId}.json`, JSON.stringify(data, null, 4), (err) => {
+            if (err) {
+                console.error('Error writing file:', err);
+            } else {
+                console.log('File created and JSON written successfully.');
+            }
+        });
 
         console.log(`Đã đăng nhập vào tài khoản ${ownId} (${displayName}) với số điện thoại ${phoneNumber} qua proxy ${useCustomProxy ? customProxy : (proxyUsed?.url || 'không có proxy')}`);
         

@@ -69,7 +69,7 @@ let loginResolve;
 router.post('/login', async (req, res) => {
     try {
         const { proxy } = req.body;
-        const qrCodeImage = await loginZaloAccount(proxy);
+        const qrCodeImage = await loginZaloAccount(proxy, null);
         res.send(`
             <html>
                <head>
