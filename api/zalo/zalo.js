@@ -90,7 +90,14 @@ export async function loginZaloAccount(customProxy) {
         const ownId = profile.userId;
         const displayName = profile.displayName;
 
-        zaloAccounts.push({ api, ownId: api.getOwnId(), proxy: useCustomProxy ? customProxy : (proxyUsed && proxyUsed.url), phoneNumber: phoneNumber });
+        const existingAccountIndex = zaloAccounts.findIndex(acc => acc.ownId === api.getOwnId());
+        if (existingAccountIndex !== -1) {
+            // Thay thế tài khoản cũ bằng tài khoản mới
+            zaloAccounts[existingAccountIndex] = { api, ownId: api.getOwnId(), proxy: useCustomProxy ? customProxy : (proxyUsed && proxyUsed.url), phoneNumber: phoneNumber };
+        } else {
+            // Thêm tài khoản mới nếu không tìm thấy tài khoản cũ
+            zaloAccounts.push({ api, ownId: api.getOwnId(), proxy: useCustomProxy ? customProxy : (proxyUsed && proxyUsed.url), phoneNumber: phoneNumber });
+        }
 
         console.log(`Đã đăng nhập vào tài khoản ${ownId} (${displayName}) với số điện thoại ${phoneNumber} qua proxy ${useCustomProxy ? customProxy : (proxyUsed?.url || 'không có proxy')}`);
         
