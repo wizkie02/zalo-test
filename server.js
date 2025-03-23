@@ -2,8 +2,7 @@
 import express from 'express';
 import routes from './routes.js';
 import fs from 'fs';
-import { zaloAccounts } from './api/zalo/zalo.js';
-import { loginZaloAccount } from './api/zalo/zalo-login.js';
+import { zaloAccounts, loginZaloAccount } from './api/zalo/zalo.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
