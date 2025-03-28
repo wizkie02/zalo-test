@@ -316,6 +316,13 @@ export async function loginZaloAccount(customProxy, cred) {
         let agent;
         let proxyUsed = null;
         let useCustomProxy = false;
+        let proxies = [];
+        try {
+            const proxiesJson = fs.readFileSync('proxies.json', 'utf8');
+            proxies = JSON.parse(proxiesJson);
+        } catch (error) {
+            console.error("Không thể đọc hoặc phân tích cú pháp proxies.json:", error);
+        }
 
         // Kiểm tra nếu người dùng nhập proxy
         if (customProxy && customProxy.trim() !== "") {
@@ -323,6 +330,17 @@ export async function loginZaloAccount(customProxy, cred) {
                 // Sử dụng constructor URL để kiểm tra tính hợp lệ
                 new URL(customProxy);
                 useCustomProxy = true;
+
+                // Kiểm tra xem proxy đã tồn tại trong mảng proxies chưa
+                if (!proxies.includes(customProxy)) {
+                    proxies.push(customProxy);
+                    // Lưu mảng proxies đã cập nhật vào proxies.json
+                    fs.writeFileSync('proxies.json', JSON.stringify(proxies, null, 4), 'utf8');
+                    console.log(`Đã thêm proxy mới vào proxies.json: ${customProxy}`);
+                } else {
+                    console.log(`Proxy đã tồn tại trong proxies.json: ${customProxy}`);
+                }
+
             } catch (err) {
                 console.log(`Proxy nhập vào không hợp lệ: ${customProxy}. Sẽ sử dụng proxy mặc định.`);
             }
@@ -332,19 +350,29 @@ export async function loginZaloAccount(customProxy, cred) {
             agent = new HttpsProxyAgent(customProxy);
         } else {
             // Chọn proxy tự động từ danh sách nếu không có proxy do người dùng nhập hợp lệ
-            const proxyIndex = proxyService.getAvailableProxyIndex();
-            if (proxyIndex === -1) {
-                return reject(new Error('Tất cả proxy đều đã đủ tài khoản. Không thể đăng nhập thêm!'));
+            if (proxies.length > 0) {
+                const proxyIndex = proxyService.getAvailableProxyIndex();
+                if (proxyIndex === -1) {
+                    console.log('Tất cả proxy đều đã đủ tài khoản. Không thể đăng nhập thêm!');
+                } else {
+                    proxyUsed = proxyService.getPROXIES()[proxyIndex];
+                    agent = new HttpsProxyAgent(proxyUsed.url);
+                }
+            } else {
+                agent = null; // Không sử dụng proxy
             }
-            proxyUsed = proxyService.getPROXIES()[proxyIndex];
-            agent = new HttpsProxyAgent(proxyUsed.url);
         }
-
-        const zalo = new Zalo({
-            agent: agent,
-            // @ts-ignore
-            polyfill: nodefetch,
-        });
+        let zalo;
+        if (useCustomProxy || agent) {
+            zalo = new Zalo({
+                agent: agent,
+                // @ts-ignore
+                polyfill: nodefetch,
+            });
+        } else {
+            zalo = new Zalo({
+            });
+        }
 
         let api;
         if (cred) {
@@ -382,7 +410,7 @@ export async function loginZaloAccount(customProxy, cred) {
         api.listener.start();
 
         // Nếu sử dụng proxy mặc định từ danh sách thì cập nhật usedCount
-        if (!useCustomProxy) {
+        if (!useCustomProxy && proxyUsed) {
             proxyUsed.usedCount++;
             proxyUsed.accounts.push(api);
         }
@@ -431,6 +459,5 @@ export async function loginZaloAccount(customProxy, cred) {
 
         console.log(`Đã đăng nhập vào tài khoản ${ownId} (${displayName}) với số điện thoại ${phoneNumber} qua proxy ${useCustomProxy ? customProxy : (proxyUsed?.url || 'không có proxy')}`);
         
-       
     });
 }

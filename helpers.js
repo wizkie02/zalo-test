@@ -24,11 +24,17 @@ export function getWebhookUrl(key) {
 }
 
 export async function triggerN8nWebhook(msg, webhookUrl) {
-    const url = webhookUrl;
+    if (!webhookUrl) {
+        console.warn("Webhook URL is empty, skipping webhook trigger");
+        return false;
+    }
+    
     try {
-        await axios.post(url, msg, { headers: { 'Content-Type': 'application/json' } });
+        await axios.post(webhookUrl, msg, { headers: { 'Content-Type': 'application/json' } });
+        return true;
     } catch (error) {
-        console.error("Error sending request:", error);
+        console.error("Error sending webhook request:", error.message);
+        return false;
     }
 }
 
