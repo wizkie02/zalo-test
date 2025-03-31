@@ -34,6 +34,14 @@
         #loginResult {
             margin-top: 20px;
         }
+        #qrcode {
+            max-width: 300px;
+            margin: 20px auto;
+            display: block;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -44,43 +52,50 @@
             <input type="text" id="proxy" name="proxy" placeholder="http://proxy:port hoặc socks5://proxy:port">
         </div>
         <button onclick="login()">Đăng nhập</button>
-        <div id="loginResult"></div>
+        <div id="loginResult">
+            <!-- Add img element for QR code -->
+            <img id="qrcode" style="display:none; margin-top:20px;" />
+        </div>
     </div>
 
     <script>
-        async function login() {
-            const proxy = document.getElementById('proxy').value;
-            const resultDiv = document.getElementById('loginResult');
-            
-            try {
-                const response = await fetch('/zalo-login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ proxy })
-                });
+async function login() {
+    const proxy = document.getElementById('proxy').value;
+    const resultDiv = document.getElementById('loginResult');
+    const qrImage = document.getElementById('qrcode');
+    
+    try {
+        const response = await fetch('/zalo-login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ proxy })
+        });
 
-                if (response.ok) {
-                    document.body.innerHTML = await response.text();
-                    
-                    // Set up WebSocket connection after showing QR code
-                    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-                    const socket = new WebSocket(`${wsProtocol}//${window.location.host}`);
-                    
-                    socket.onmessage = function(event) {
-                        if (event.data === 'login_success') {
-                            window.location.href = '/dashboard';
-                        }
-                    };
-                } else {
-                    const error = await response.json();
-                    resultDiv.innerHTML = `<p style="color: red">Lỗi: ${error.message || 'Không thể đăng nhập'}</p>`;
+        if (response.ok) {
+            const data = await response.text();
+            // Display QR code as image
+            qrImage.src = data;
+            qrImage.style.display = 'block';
+            
+            // Set up WebSocket connection after showing QR code
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const socket = new WebSocket(`${wsProtocol}//${window.location.host}`);
+            
+            socket.onmessage = function(event) {
+                if (event.data === 'login_success') {
+                    window.location.href = '/dashboard';
                 }
-            } catch (error) {
-                resultDiv.innerHTML = `<p style="color: red">Lỗi: ${error.message}</p>`;
-            }
+            };
+        } else {
+            const error = await response.json();
+            resultDiv.innerHTML = `<p style="color: red">Lỗi: ${error.message || 'Không thể đăng nhập'}</p>`;
         }
-    </script>
+    } catch (error) {
+        resultDiv.innerHTML = `<p style="color: red">Lỗi: ${error.message}</p>`;
+    }
+}
+</script>
 </body>
 </html>
