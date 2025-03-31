@@ -54,8 +54,8 @@ app.get('/dashboard', (req, res) => {
     });
 });
 
-// API Routes
-app.use('/api', apiRoutes);
+// API Routes with versioning
+app.use('/api/v1', apiRoutes);
 
 // Account management routes
 app.get('/accounts', (req, res) => {
