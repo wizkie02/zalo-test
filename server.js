@@ -4,11 +4,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import fs from 'fs';
 import { WebSocket, WebSocketServer } from 'ws';
-import {
-    zaloAccounts,
-    loginZaloAccount,
-    initializeWebSocket
-} from './api/zalo/zalo.js';
+import { zaloAccounts, loginZaloAccount, initializeWebSocket } from './api/zalo/zalo.js';
 import apiRoutes from './routes-api.js';
 import path from 'path';
 
@@ -58,8 +54,8 @@ app.get('/dashboard', (req, res) => {
     });
 });
 
-// API Routes with versioning
-app.use('/api/v1', apiRoutes);
+// API Routes
+app.use('/api', apiRoutes);
 
 // Account management routes
 app.get('/accounts', (req, res) => {
