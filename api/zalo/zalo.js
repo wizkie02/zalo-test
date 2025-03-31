@@ -465,12 +465,11 @@ export async function loginZaloAccount(customProxy, cred) {
 }
 
 export function initializeWebSocket(server) {
-    const wss = new WebSocket.Server({ server });
+    const wss = new WebSocketServer({ server });
     
     wss.on('connection', (ws) => {
         console.log('WebSocket client connected');
         
-        // Store the WebSocket connection for sending QR codes
         ws.on('message', (message) => {
             console.log('Received:', message);
         });
