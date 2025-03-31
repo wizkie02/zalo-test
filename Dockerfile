@@ -1,20 +1,39 @@
-# Sử dụng image Node.js chính thức (phiên bản 18-slim)
 FROM node:18-alpine
 
-# Đặt thư mục làm việc trong container
+# Install Chromium and dependencies
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
+# Set environment variables for Puppeteer
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
 WORKDIR /app
 
-# Copy file package.json (và package-lock.json nếu có) để cài đặt các dependency
-COPY package.json ./
+# Copy package files
+COPY package*.json ./
 
-# Cài đặt các package cần thiết
+# Install dependencies
 RUN npm install
 
-# Copy toàn bộ mã nguồn vào container
+# Copy source code
 COPY . .
 
-# Expose cổng mà server lắng nghe (trong trường hợp này là 3000)
+# Create necessary directories and files
+RUN mkdir -p zalo_data && \
+    touch zalo_data/proxies.json && \
+    echo '[]' > zalo_data/proxies.json && \
+    touch zalo_data/webhook-config.json && \
+    echo '{}' > zalo_data/webhook-config.json
+
+# Expose port
 EXPOSE 3000
 
-# Khởi chạy ứng dụng
-CMD ["npm", "start"]
+# Start application
+CMD ["node", "server.js"]
