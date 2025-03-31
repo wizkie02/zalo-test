@@ -963,9 +963,11 @@ export async function getOwnId(req, res) {
 }
 
 export {
+    // Core functionality
     loginZaloAccount,
     initializeWebSocket,
     zaloAccounts,
+
     // Account Management
     getProfile,
     updateProfile,
@@ -973,6 +975,7 @@ export {
     getFriendRequests,
     acceptFriendRequest,
     getChatHistory,
+
     // Message Functions
     sendMessage,
     sendImageToUser,
@@ -980,6 +983,7 @@ export {
     sendImageToGroup,
     sendImagesToGroup,
     reactToMessage,
+
     // User Management
     findUser,
     getUserInfo,
@@ -987,6 +991,7 @@ export {
     unblockUser,
     changeFriendAlias,
     sendFriendRequest,
+
     // Group Management
     createGroup,
     getGroupInfo,
@@ -998,17 +1003,20 @@ export {
     addGroupDeputy,
     removeGroupDeputy,
     disperseGroup,
+
     // Group Features
     createNote,
     editNote,
     createPoll,
     lockPoll,
+
     // Message Features
     deleteMessage,
     addReaction,
     sendSticker,
     sendVoice,
     sendCard,
+
     // Other Features
     getAllFriends,
     getAllGroups,
@@ -1017,6 +1025,7 @@ export {
     pinConversations,
     sendReport,
     undo,
+
     // Context and System
     getContext,
     getCookie,
