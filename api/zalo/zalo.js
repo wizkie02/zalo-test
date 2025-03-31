@@ -1,11 +1,22 @@
-import { ZaloClient } from 'zca-js';
+import zca from 'zca-js';
 
 // Store for Zalo accounts
 const zaloAccounts = [];
 
 // Main functions
 async function loginZaloAccount(proxy = null, cookie = null) {
-    // ...existing code...
+    try {
+        const client = new zca();
+        if (proxy) {
+            client.setProxy(proxy);
+        }
+        if (cookie) {
+            client.setCookie(cookie);
+        }
+        // ... rest of login logic
+    } catch (error) {
+        throw new Error(`Login failed: ${error.message}`);
+    }
 }
 
 function initializeWebSocket(ws) {
