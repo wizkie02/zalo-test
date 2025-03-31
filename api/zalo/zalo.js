@@ -1,4 +1,3 @@
-// api/zalo/zalo.js
 import { ZaloClient } from 'zca-js';
 
 // Store for Zalo accounts
@@ -14,27 +13,74 @@ function initializeWebSocket(ws) {
 }
 
 // API Endpoint Functions
-async function disperseGroup(req, res) {
+async function acceptFriendRequest(req, res) {
     try {
-        const { ownId, groupId } = req.body;
+        const { ownId, userId } = req.body;
         const account = zaloAccounts.find(acc => acc.ownId === ownId);
         if (!account) return res.status(400).json({ error: 'Account not found' });
-        const result = await account.api.disperseGroup(groupId);
+        const result = await account.api.acceptFriendRequest(userId);
         res.json({ success: true, data: result });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
 }
 
-// ... other API endpoint functions ...
+async function addGroupDeputy(req, res) {
+    try {
+        const { ownId, groupId, userId } = req.body;
+        const account = zaloAccounts.find(acc => acc.ownId === ownId);
+        if (!account) return res.status(400).json({ error: 'Account not found' });
+        const result = await account.api.addGroupDeputy(groupId, userId);
+        res.json({ success: true, data: result });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+}
 
-// Export everything at the end of the file
+// Add all other function implementations here...
+async function addReaction(req, res) { /* ... */ }
+async function addUserToGroup(req, res) { /* ... */ }
+async function blockUser(req, res) { /* ... */ }
+async function changeFriendAlias(req, res) { /* ... */ }
+async function changeGroupAvatar(req, res) { /* ... */ }
+async function changeGroupName(req, res) { /* ... */ }
+async function changeGroupOwner(req, res) { /* ... */ }
+async function createGroup(req, res) { /* ... */ }
+async function createNote(req, res) { /* ... */ }
+async function createPoll(req, res) { /* ... */ }
+async function deleteMessage(req, res) { /* ... */ }
+async function disperseGroup(req, res) { /* ... */ }
+async function editNote(req, res) { /* ... */ }
+async function fetchAccountInfo(req, res) { /* ... */ }
+async function findUser(req, res) { /* ... */ }
+async function getAllFriends(req, res) { /* ... */ }
+async function getAllGroups(req, res) { /* ... */ }
+async function getContext(req, res) { /* ... */ }
+async function getCookie(req, res) { /* ... */ }
+async function getGroupInfo(req, res) { /* ... */ }
+async function getOwnId(req, res) { /* ... */ }
+async function getQR(req, res) { /* ... */ }
+async function getStickers(req, res) { /* ... */ }
+async function getStickersDetail(req, res) { /* ... */ }
+async function getUserInfo(req, res) { /* ... */ }
+async function lockPoll(req, res) { /* ... */ }
+async function pinConversations(req, res) { /* ... */ }
+async function removeGroupDeputy(req, res) { /* ... */ }
+async function removeUserFromGroup(req, res) { /* ... */ }
+async function sendCard(req, res) { /* ... */ }
+async function sendFriendRequest(req, res) { /* ... */ }
+async function sendMessage(req, res) { /* ... */ }
+async function sendReport(req, res) { /* ... */ }
+async function sendSticker(req, res) { /* ... */ }
+async function sendVoice(req, res) { /* ... */ }
+async function unblockUser(req, res) { /* ... */ }
+async function undo(req, res) { /* ... */ }
+
+// Export everything at the end
 export {
     zaloAccounts,
     loginZaloAccount,
     initializeWebSocket,
-    disperseGroup,
-    // Other exports...
     acceptFriendRequest,
     addGroupDeputy,
     addReaction,
@@ -48,6 +94,7 @@ export {
     createNote,
     createPoll,
     deleteMessage,
+    disperseGroup,
     editNote,
     fetchAccountInfo,
     findUser,
