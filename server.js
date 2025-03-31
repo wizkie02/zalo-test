@@ -22,17 +22,6 @@ function loadWebhookConfig() {
             groupEventWebhookUrl: groupEventWebhookUrl,
             reactionWebhookUrl: reactionWebhookUrl,
         };
-    } else {
-        // Environment variables are not set, try to load from file
-        const configFilePath = './webhook-config.json'; // Path inside the container
-        try {
-            const rawData = fs.readFileSync(configFilePath);
-            webhookConfig = JSON.parse(rawData);
-        } catch (error) {
-            console.error('Error loading webhook config from file:', error);
-            // Handle the error appropriately (e.g., exit the application, use default values)
-            process.exit(1); // Example: Exit the application if config is essential
-        }
     }
 }
 

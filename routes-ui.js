@@ -52,8 +52,8 @@ router.get('/', (req, res) => {
   });
   
 
-// Trang nhập proxy và hiển thị form để đăng nhập qua QR code
-router.get('/login', (req, res) => {
+// Hiển thị form đăng nhập
+router.get('/zalo-login', (req, res) => {
     const loginFile = path.join(__dirname, 'login.html');
     fs.readFile(loginFile, 'utf8', (err, data) => {
       if (err) {
@@ -66,7 +66,7 @@ router.get('/login', (req, res) => {
 
 // Xử lý đăng nhập: sử dụng proxy do người dùng nhập nếu hợp lệ, nếu không sẽ sử dụng proxy mặc định
 let loginResolve;
-router.post('/login', async (req, res) => {
+router.post('/zalo-login', async (req, res) => {
     try {
         const { proxy } = req.body;
         const qrCodeImage = await loginZaloAccount(proxy, null);

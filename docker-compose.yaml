@@ -6,11 +6,15 @@ services:
       - "3000:3000"
     volumes:
       - type: bind
-        source: ./proxies.json
+        source: ./zalo_data
+        target: /app/cookies
+        consistency: consistent
+      - type: bind
+        source: ./zalo_data/proxies.json
         target: /app/proxies.json
         consistency: consistent
       - type: bind
-        source: ./webhook-config.json
+        source: ./zalo_data/webhook-config.json
         target: /app/webhook-config.json
         consistency: consistent
     environment:

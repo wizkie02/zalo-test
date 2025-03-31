@@ -1,5 +1,5 @@
 {
-  "messageWebhookUrl": "https://n8n.dieucanbiet.org/webhook-test/zalo-api",
-  "groupEventWebhookUrl": "https://n8n.dieucanbiet.org/webhook-test/zalo-api-group",
-  "reactionWebhookUrl": "https://n8n.dieucanbiet.org/webhook-test/zalo-api-reaction"
+  "messageWebhookUrl": "https://vpsn8n.dieucanbiet.com/webhook/zalo-api",
+  "groupEventWebhookUrl": "https://vpsn8n.dieucanbiet.com/webhook/zalo-api-group",
+  "reactionWebhookUrl": "https://vpsn8n.dieucanbiet.com/webhook/zalo-api-reaction"
 }
