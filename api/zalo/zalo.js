@@ -461,35 +461,3 @@ export async function loginZaloAccount(customProxy, cred) {
         
     });
 }
-
-function initializeWebSocket(ws) {
-    ws.on('message', async (message) => {
-        try {
-            const data = JSON.parse(message);
-            if (data.type === 'login_success') {
-                console.log('Login successful for account:', data.ownId);
-                ws.send('login_success');
-            }
-        } catch (error) {
-            console.error('WebSocket error:', error);
-        }
-    });
-}
-
-export {
-    loginZaloAccount,
-    initializeWebSocket,
-    zaloAccounts,
-    findUser,
-    getUserInfo,
-    sendFriendRequest,
-    sendMessage,
-    createGroup,
-    getGroupInfo,
-    addUserToGroup,
-    removeUserFromGroup,
-    sendImageToUser,
-    sendImagesToUser,
-    sendImageToGroup,
-    sendImagesToGroup,
-};
