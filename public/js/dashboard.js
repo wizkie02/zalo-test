@@ -1,12 +1,6 @@
 let currentOwnId = '';
 let currentDisplayName = '';
 
-// Khởi tạo khi load trang
-window.onload = async () => {
-    await loadAccounts();
-    updateWelcomeMessage();
-};
-
 // Load danh sách tài khoản
 async function loadAccounts() {
     try {
@@ -255,3 +249,32 @@ function showError(elementId, error) {
         </div>
     `;
 }
+
+// Update WebSocket connection handling
+function setupWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}`;
+    const socket = new WebSocket(wsUrl);
+    
+    socket.onmessage = function(event) {
+        if (event.data === 'login_success') {
+            showSuccessAndRedirect();
+        }
+    };
+    
+    socket.onclose = function() {
+        // Try to reconnect after 3 seconds
+        setTimeout(setupWebSocket, 3000);
+    };
+    
+    socket.onerror = function(error) {
+        console.error('WebSocket error:', error);
+    };
+}
+
+// Start the WebSocket connection when the page loads
+window.onload = async () => {
+    await loadAccounts();
+    updateWelcomeMessage();
+    setupWebSocket();
+};
