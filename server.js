@@ -4,7 +4,11 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import fs from 'fs';
 import { WebSocket, WebSocketServer } from 'ws';
-import { zaloAccounts, loginZaloAccount, initializeWebSocket } from './api/zalo/zalo.js';
+import {
+    zaloAccounts,
+    loginZaloAccount,
+    initializeWebSocket
+} from './api/zalo/zalo.js';
 import apiRoutes from './routes-api.js';
 import path from 'path';
 

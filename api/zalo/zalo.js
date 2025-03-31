@@ -1,12 +1,70 @@
 // api/zalo/zalo.js
-import { Zalo, ThreadType } from 'zca-js';
+import { ZaloClient } from 'zca-js';
 import { proxyService } from '../../proxyService.js';
 import { setupEventListeners } from '../../eventListeners.js';
 import { HttpsProxyAgent } from "https-proxy-agent";
 import nodefetch from "node-fetch";
 import fs from 'fs';
 
-export const zaloAccounts = [];
+// Export the main functions
+export {
+    loginZaloAccount,
+    zaloAccounts,
+    initializeWebSocket,
+    // Other functions
+    acceptFriendRequest,
+    addGroupDeputy,
+    addReaction,
+    addUserToGroup,
+    blockUser,
+    changeFriendAlias,
+    changeGroupAvatar,
+    changeGroupName,
+    changeGroupOwner,
+    createGroup,
+    createNote,
+    createPoll,
+    deleteMessage,
+    disperseGroup,
+    editNote,
+    fetchAccountInfo,
+    findUser,
+    getAllFriends,
+    getAllGroups,
+    getContext,
+    getCookie,
+    getGroupInfo,
+    getOwnId,
+    getQR,
+    getStickers,
+    getStickersDetail,
+    getUserInfo,
+    lockPoll,
+    pinConversations,
+    removeGroupDeputy,
+    removeUserFromGroup,
+    sendCard,
+    sendFriendRequest,
+    sendMessage,
+    sendReport,
+    sendSticker,
+    sendVoice,
+    unblockUser,
+    undo
+};
+
+// Main account management functions
+async function loginZaloAccount(proxy = null, cookie = null) {
+    // ...existing code...
+}
+
+// Initialize WebSocket connection
+function initializeWebSocket(ws) {
+    // ...existing code...
+}
+
+// Account storage
+const zaloAccounts = [];
 
 export async function findUser(req, res) {
     try {
