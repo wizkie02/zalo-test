@@ -9,3 +9,8 @@ services:
         value: production
       - key: PORT
         value: 3000
+    disk:
+      name: zalo-data
+      mountPath: /app/zalo_data
+      sizeGB: 1
+    staticPublishPath: ./views # Add this line
