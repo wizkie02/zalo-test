@@ -5,6 +5,7 @@ import { setupEventListeners } from '../../eventListeners.js';
 import { HttpsProxyAgent } from "https-proxy-agent";
 import nodefetch from "node-fetch";
 import fs from 'fs';
+import WebSocket from 'ws';
 
 export const zaloAccounts = [];
 
@@ -460,4 +461,24 @@ export async function loginZaloAccount(customProxy, cred) {
         console.log(`Đã đăng nhập vào tài khoản ${ownId} (${displayName}) với số điện thoại ${phoneNumber} qua proxy ${useCustomProxy ? customProxy : (proxyUsed?.url || 'không có proxy')}`);
         
     });
+    
+}
+
+export function initializeWebSocket(server) {
+    const wss = new WebSocket.Server({ server });
+    
+    wss.on('connection', (ws) => {
+        console.log('WebSocket client connected');
+        
+        // Store the WebSocket connection for sending QR codes
+        ws.on('message', (message) => {
+            console.log('Received:', message);
+        });
+        
+        ws.on('close', () => {
+            console.log('Client disconnected');
+        });
+    });
+    
+    return wss;
 }
