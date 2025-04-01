@@ -1,137 +1,64 @@
+// server.js
 import express from 'express';
-import cors from 'cors';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import routes from './routes.js';
 import fs from 'fs';
-import session from 'express-session';
-import { WebSocketServer } from 'ws';
-import http from 'http';
-
-// Route imports
-import apiRoutes from './routes-api.js';
-import uiRoutes from './routes-ui.js';
-import dashboardRoutes from './routes-dashboard.js';
-import { authMiddleware, publicRoutes } from './auth.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { zaloAccounts, loginZaloAccount } from './api/zalo/zalo.js';
 
 const app = express();
-const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
 
-// WebSocket setup with production support
-const wss = new WebSocketServer({ 
-    server,
-    clientTracking: true,
-    perMessageDeflate: false,
-    maxPayload: 32 * 1024 // 32KB max payload
-});
+let webhookConfig = {};
 
-const clients = new Set();
+// Function to load webhook config
+function loadWebhookConfig() {
+    const messageWebhookUrl = process.env.MESSAGE_WEBHOOK_URL;
+    const groupEventWebhookUrl = process.env.GROUP_EVENT_WEBHOOK_URL;
+    const reactionWebhookUrl = process.env.REACTION_WEBHOOK_URL;
 
-wss.on('connection', (ws, req) => {
-    clients.add(ws);
-    
-    // Add ping/pong for connection health check
-    ws.isAlive = true;
-    ws.on('pong', () => { ws.isAlive = true; });
-    
-    ws.on('close', () => {
-        clients.delete(ws);
-        ws.isAlive = false;
-    });
-    
-    ws.on('error', (error) => {
-        console.error('WebSocket error:', error);
-        ws.isAlive = false;
-        clients.delete(ws);
-    });
-});
-
-// Health check interval for WebSocket connections
-const interval = setInterval(() => {
-    wss.clients.forEach((ws) => {
-        if (ws.isAlive === false) return ws.terminate();
-        ws.isAlive = false;
-        ws.ping();
-    });
-}, 30000);
-
-wss.on('close', () => {
-    clearInterval(interval);
-});
-
-export function broadcastLoginSuccess() {
-    clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send('login_success');
-        }
-    });
+    if (messageWebhookUrl && groupEventWebhookUrl && reactionWebhookUrl) {
+        // Environment variables are set, use them
+        webhookConfig = {
+            messageWebhookUrl: messageWebhookUrl,
+            groupEventWebhookUrl: groupEventWebhookUrl,
+            reactionWebhookUrl: reactionWebhookUrl,
+        };
+    }
 }
 
-// Middleware
-app.use(cors({
-    origin: process.env.NODE_ENV === 'production' ? [/\.render\.com$/, /localhost/] : true,
-    credentials: true
-}));
+// Load the config when the application starts
+loadWebhookConfig();
+
+// Now you can use webhookConfig.messageWebhookUrl, webhookConfig.groupEventWebhookUrl, and webhookConfig.reactionWebhookUrl
+console.log("Message Webhook URL:", webhookConfig.messageWebhookUrl);
+console.log("Group Event Webhook URL:", webhookConfig.groupEventWebhookUrl);
+console.log("Reaction Webhook URL:", webhookConfig.reactionWebhookUrl);
+
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true })); // Dùng để parse dữ liệu form
 
-// Session setup with secure settings for production
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { 
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+app.use('/', routes);
+
+const cookiesDir = './cookies';
+if (fs.existsSync(cookiesDir)) {
+    const cookieFiles = fs.readdirSync(cookiesDir);
+    if (zaloAccounts.length < cookieFiles.length) {
+        console.log('Số lượng tài khoản Zalo nhỏ hơn số lượng cookie files. Đang đăng nhập lại từ cookie...');
+        for (const file of cookieFiles) {
+            if (file.startsWith('cred_') && file.endsWith('.json')) {
+                const ownId = file.substring(5, file.length - 5, file.length);
+                try {
+                    const cookie = JSON.parse(fs.readFileSync(`${cookiesDir}/${file}`, "utf-8"));
+                    await loginZaloAccount(null, cookie);
+                    console.log(`Đã đăng nhập lại tài khoản ${ownId} từ cookie.`);
+                } catch (error) {
+                    console.error(`Lỗi khi đăng nhập lại tài khoản ${ownId} từ cookie:`, error);
+                }
+            }
+        }
     }
-}));
+}
 
-// Static files
-app.use(express.static(join(__dirname, 'public')));
-app.use('/js', express.static(join(__dirname, 'public/js')));
-
-// Root redirect
-app.get('/', (req, res) => {
-    res.redirect('/dashboard');
-});
-
-// Authentication middleware for non-public routes
-app.use((req, res, next) => {
-    if (publicRoutes.includes(req.path) || req.path.startsWith('/api/')) {
-        return next();
-    }
-    authMiddleware(req, res, next);
-});
-
-// Routes
-app.use('/api', apiRoutes);
-app.use('/', uiRoutes);
-app.use('/', dashboardRoutes);
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'OK',
-        timestamp: new Date().toISOString(),
-        websocket: wss.clients.size,
-        env: process.env.NODE_ENV
-    });
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({
-        success: false,
-        error: 'Internal Server Error'
-    });
-});
-
-// Start server
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server đang chạy tại http://localhost:${PORT}`);
 });

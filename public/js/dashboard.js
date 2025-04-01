@@ -1,280 +1,595 @@
-let currentOwnId = '';
-let currentDisplayName = '';
+// dashboard.js - Client-side functionality for Zalo API Dashboard
 
-// Load danh sách tài khoản
-async function loadAccounts() {
-    try {
-        const response = await fetch('/accounts');
-        const text = await response.text();
-        document.getElementById('accountsList').innerHTML = text;
-        
-        // Trích xuất ownId từ bảng HTML
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, 'text/html');
-        const firstRow = doc.querySelector('tbody tr');
-        if (firstRow) {
-            currentOwnId = firstRow.cells[0].textContent.trim();
-            currentDisplayName = firstRow.cells[1].textContent.trim();
-            updateCurrentAccount(firstRow);
-            updateWelcomeMessage();
-        } else {
-            showError('currentAccount', 'Chưa có tài khoản nào đăng nhập');
-        }
-    } catch (error) {
-        showError('accountsList', error);
-    }
-}
+// Store the selected account (ownId) in a variable
+let selectedAccount = '';
 
-// Cập nhật welcome message
-function updateWelcomeMessage() {
-    const welcomeMsg = document.getElementById('welcomeMessage');
-    if (currentDisplayName) {
-        welcomeMsg.textContent = `Xin chào ${currentDisplayName}`;
-    } else {
-        welcomeMsg.textContent = 'Xin chào';
-    }
-}
+// Document load event
+document.addEventListener('DOMContentLoaded', function() {
+    // Load the accounts when the page loads
+    loadAccounts();
+});
 
-// Xử lý logout
-async function logout() {
-    try {
-        const response = await fetch('/logout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ownId: currentOwnId })
+// Function to load all accounts
+function loadAccounts() {
+    fetch('/api/accounts')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.accounts && data.accounts.length > 0) {
+                // Display accounts in the account list
+                let accountsList = document.getElementById('accountsList');
+                let html = '<table class="table table-striped">';
+                html += '<thead><tr><th>ID</th><th>Phone Number</th><th>Proxy</th><th>Action</th></tr></thead><tbody>';
+                
+                data.accounts.forEach(account => {
+                    html += `<tr>
+                        <td>${account.ownId}</td>
+                        <td>${account.phone || 'N/A'}</td>
+                        <td>${account.proxy || 'N/A'}</td>
+                        <td><button class="btn btn-sm btn-primary" onclick="selectAccount('${account.ownId}')">Select</button></td>
+                    </tr>`;
+                });
+                
+                html += '</tbody></table>';
+                accountsList.innerHTML = html;
+                
+                // If no account is selected yet and we have accounts, select the first one
+                if (!selectedAccount && data.accounts.length > 0) {
+                    selectAccount(data.accounts[0].ownId);
+                }
+            } else {
+                document.getElementById('accountsList').innerHTML = '<div class="alert alert-warning">No accounts available. Please login first.</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading accounts:', error);
+            document.getElementById('accountsList').innerHTML = '<div class="alert alert-danger">Error loading accounts. Please try again.</div>';
         });
-
-        if (response.ok) {
-            window.location.href = '/zalo-login';
-        } else {
-            const error = await response.json();
-            alert('Lỗi đăng xuất: ' + (error.message || 'Không thể đăng xuất'));
-        }
-    } catch (error) {
-        alert('Lỗi đăng xuất: ' + error.message);
-    }
 }
 
-// Cập nhật request body template khi chọn API endpoint
-function updateRequestBody() {
-    const endpoint = document.getElementById('apiEndpoint').value;
-    if (!endpoint) {
-        document.getElementById('apiBody').value = '';
+// Function to select an account
+function selectAccount(ownId) {
+    selectedAccount = ownId;
+    // Update the current account display
+    fetch(`/api/account/${ownId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.account) {
+                const account = data.account;
+                document.getElementById('currentAccount').innerHTML = `
+                    <div class="alert alert-info mb-0">
+                        <strong>ID:</strong> ${account.ownId} <br>
+                        <strong>Phone:</strong> ${account.phoneNumber || 'N/A'} <br>
+                        <strong>Proxy:</strong> ${account.proxy || 'N/A'}
+                    </div>`;
+                
+                // Update the welcome message
+                document.getElementById('welcomeMessage').textContent = `Xin chào ${account.phoneNumber || account.ownId}`;
+                
+                // Update all template JSON bodies with this account ID
+                updateAllTemplates(account.ownId);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching account details:', error);
+        });
+}
+
+// Update all template JSON bodies with the selected account ID
+function updateAllTemplates(ownId) {
+    const templates = document.querySelectorAll('.endpoint-template');
+    templates.forEach(template => {
+        let jsonContent = template.textContent;
+        jsonContent = jsonContent.replace(/"ownId"\s*:\s*"[^"]*"/, `"ownId": "${ownId}"`);
+        template.textContent = jsonContent;
+    });
+}
+
+// Function to find a user by phone number
+function findUser() {
+    if (!selectedAccount) {
+        alert('Please select an account first');
         return;
     }
+    
+    const phone = document.getElementById('phone').value.trim();
+    if (!phone) {
+        alert('Please enter a phone number');
+        return;
+    }
+    
+    const requestBody = {
+        ownId: selectedAccount,
+        phone: phone
+    };
+    
+    document.getElementById('findUserResult').innerHTML = '<div class="text-center">Searching...</div>';
+    
+    fetch('/findUser', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const userData = data.data;
+            let html = `<div class="alert alert-success">Found user: ${userData.display_name || userData.zalo_name || 'N/A'}</div>`;
+            html += `<strong>User ID:</strong> ${userData.uid || 'N/A'}<br>`;
+            html += `<strong>Display Name:</strong> ${userData.display_name || 'N/A'}<br>`;
+            html += `<strong>Zalo Name:</strong> ${userData.zalo_name || 'N/A'}<br>`;
+            
+            if (userData.status) {
+                html += `<strong>Status:</strong> ${userData.status}<br>`;
+            }
+            
+            if (userData.gender !== undefined) {
+                const gender = userData.gender === 1 ? "Nam" : (userData.gender === 2 ? "Nữ" : "Không xác định");
+                html += `<strong>Gender:</strong> ${gender}<br>`;
+            }
+            
+            if (userData.sdob) {
+                html += `<strong>Birthday:</strong> ${userData.sdob}<br>`;
+            }
+            
+            if (userData.avatar) {
+                html += `<strong>Avatar:</strong><br><img src="${userData.avatar}" width="100" height="100" class="rounded"><br>`;
+            }
+            
+            if (userData.cover) {
+                html += `<strong>Cover:</strong><br><img src="${userData.cover}" width="200" class="img-fluid"><br>`;
+            }
+            
+            if (userData.globalId) {
+                html += `<strong>Global ID:</strong> ${userData.globalId}<br>`;
+            }
+            
+            document.getElementById('findUserResult').innerHTML = html;
+        } else {
+            document.getElementById('findUserResult').innerHTML = `<div class="alert alert-danger">Error: ${data.error || 'User not found'}</div>`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('findUserResult').innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    });
+}
 
-    const templateId = 'template-' + endpoint.substring(1); // Remove leading slash
+// Function to send a message
+function sendMessage() {
+    if (!selectedAccount) {
+        alert('Please select an account first');
+        return;
+    }
+    
+    const threadId = document.getElementById('messageThreadId').value.trim();
+    const message = document.getElementById('messageContent').value.trim();
+    
+    if (!threadId || !message) {
+        alert('Please enter both thread ID and message content');
+        return;
+    }
+    
+    const requestBody = {
+        ownId: selectedAccount,
+        threadId: threadId,
+        message: message,
+        type: 'User' // Default to user type
+    };
+    
+    document.getElementById('sendMessageResult').innerHTML = '<div class="text-center">Sending message...</div>';
+    
+    fetch('/sendmessage', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('sendMessageResult').innerHTML = 
+                `<div class="alert alert-success">Message sent successfully!</div>`;
+            // Clear the message input field after successful send
+            document.getElementById('messageContent').value = '';
+        } else {
+            document.getElementById('sendMessageResult').innerHTML = 
+                `<div class="alert alert-danger">Error: ${data.error || 'Failed to send message'}</div>`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('sendMessageResult').innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    });
+}
+
+// Function to send a message by phone number
+function sendMessageByPhone() {
+    if (!selectedAccount) {
+        alert('Please select an account first');
+        return;
+    }
+    
+    const phone = document.getElementById('messagePhone').value.trim();
+    const message = document.getElementById('messagePhoneContent').value.trim();
+    
+    if (!phone || !message) {
+        alert('Please enter both phone number and message content');
+        return;
+    }
+    
+    const requestBody = {
+        ownId: selectedAccount,
+        phone: phone,
+        message: message
+    };
+    
+    document.getElementById('sendMessageByPhoneResult').innerHTML = '<div class="text-center">Sending message...</div>';
+    
+    fetch('/sendMessageByPhoneNumber', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = `<div class="alert alert-success">Message sent successfully!</div>`;
+            
+            if (data.user) {
+                html += `<div>Sent to: ${data.user.name || data.user.userId} (${data.user.userId})</div>`;
+            }
+            
+            document.getElementById('sendMessageByPhoneResult').innerHTML = html;
+            // Clear the message input field after successful send
+            document.getElementById('messagePhoneContent').value = '';
+        } else {
+            document.getElementById('sendMessageByPhoneResult').innerHTML = 
+                `<div class="alert alert-danger">Error: ${data.error || 'Failed to send message'}</div>`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('sendMessageByPhoneResult').innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    });
+}
+
+// Function to send an image
+function sendImage() {
+    if (!selectedAccount) {
+        alert('Please select an account first');
+        return;
+    }
+    
+    const threadId = document.getElementById('imageThreadId').value.trim();
+    const imagePath = document.getElementById('imagePath').value.trim();
+    
+    if (!threadId || !imagePath) {
+        alert('Please enter both thread ID and image URL');
+        return;
+    }
+    
+    const requestBody = {
+        ownId: selectedAccount,
+        threadId: threadId,
+        imagePath: imagePath
+    };
+    
+    document.getElementById('sendImageResult').innerHTML = '<div class="text-center">Sending image...</div>';
+    
+    fetch('/sendImageToUser', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('sendImageResult').innerHTML = 
+                `<div class="alert alert-success">Image sent successfully!</div>`;
+            // Clear the image input field after successful send
+            document.getElementById('imagePath').value = '';
+        } else {
+            document.getElementById('sendImageResult').innerHTML = 
+                `<div class="alert alert-danger">Error: ${data.error || 'Failed to send image'}</div>`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('sendImageResult').innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    });
+}
+
+// Function to send an image by phone number
+function sendImageByPhone() {
+    if (!selectedAccount) {
+        alert('Please select an account first');
+        return;
+    }
+    
+    const phone = document.getElementById('imagePhone').value.trim();
+    const imagePath = document.getElementById('imagePhonePath').value.trim();
+    
+    if (!phone || !imagePath) {
+        alert('Please enter both phone number and image URL');
+        return;
+    }
+    
+    const requestBody = {
+        ownId: selectedAccount,
+        phone: phone,
+        imagePath: imagePath
+    };
+    
+    document.getElementById('sendImageByPhoneResult').innerHTML = '<div class="text-center">Sending image...</div>';
+    
+    fetch('/sendImageByPhoneNumber', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = `<div class="alert alert-success">Image sent successfully!</div>`;
+            
+            if (data.user) {
+                html += `<div>Sent to: ${data.user.name || data.user.userId} (${data.user.userId})</div>`;
+            }
+            
+            document.getElementById('sendImageByPhoneResult').innerHTML = html;
+            // Clear the image input field after successful send
+            document.getElementById('imagePhonePath').value = '';
+        } else {
+            document.getElementById('sendImageByPhoneResult').innerHTML = 
+                `<div class="alert alert-danger">Error: ${data.error || 'Failed to send image'}</div>`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('sendImageByPhoneResult').innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    });
+}
+
+// Function to update the request body with a template
+function updateRequestBody() {
+    const endpoint = document.getElementById('apiEndpoint').value;
+    if (!endpoint) return;
+    
+    const templateId = 'template-' + endpoint.substring(1); // Remove the leading slash
     const template = document.getElementById(templateId);
     
     if (template) {
-        let templateContent = template.textContent;
-        // Tự động điền ownId nếu có
-        if (currentOwnId) {
-            templateContent = templateContent.replace('your_account_id', currentOwnId);
+        let jsonContent = template.textContent;
+        if (selectedAccount) {
+            jsonContent = jsonContent.replace(/"ownId"\s*:\s*"[^"]*"/, `"ownId": "${selectedAccount}"`);
         }
-        document.getElementById('apiBody').value = templateContent;
-    } else {
-        document.getElementById('apiBody').value = '{\n    "ownId": "' + currentOwnId + '"\n}';
+        document.getElementById('apiBody').value = jsonContent;
     }
 }
 
-// Cập nhật thông tin tài khoản đang sử dụng
-function updateCurrentAccount(accountRow) {
-    const accountInfo = {
-        ownId: accountRow.cells[0].textContent.trim(),
-        phoneNumber: accountRow.cells[1].textContent.trim(),
-        proxy: accountRow.cells[2].textContent.trim()
-    };
-    
-    document.getElementById('currentAccount').innerHTML = `
-        <div class="alert alert-info mb-0">
-            <strong>ID:</strong> ${accountInfo.ownId}<br>
-            <strong>Số điện thoại:</strong> ${accountInfo.phoneNumber}<br>
-            <strong>Proxy:</strong> ${accountInfo.proxy || 'Không sử dụng'}
-        </div>
-    `;
-}
-
-// Tìm người dùng qua số điện thoại
-async function findUser() {
-    const phone = document.getElementById('phoneNumber').value;
-    if (!phone || !currentOwnId) {
-        showError('findUserResult', 'Vui lòng nhập số điện thoại và đảm bảo đã đăng nhập');
-        return;
-    }
-
-    try {
-        const response = await fetch('/findUser', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                phone,
-                ownId: currentOwnId 
-            })
-        });
-        
-        const result = await response.json();
-        if (result.success) {
-            document.getElementById('findUserResult').innerHTML = `
-                <div class="alert alert-success">
-                    <strong>Tìm thấy người dùng:</strong><br>
-                    Tên: ${result.data.display_name}<br>
-                    ID: ${result.data.uid}<br>
-                    ${result.data.avatar ? `<img src="${result.data.avatar}" width="50" class="mt-2">` : ''}
-                </div>
-            `;
-            // Tự động điền ID vào form gửi tin nhắn
-            document.getElementById('messageThreadId').value = result.data.uid;
-            document.getElementById('imageThreadId').value = result.data.uid;
-        } else {
-            showError('findUserResult', result.error || 'Không tìm thấy người dùng');
-        }
-    } catch (error) {
-        showError('findUserResult', error);
-    }
-}
-
-// Gửi tin nhắn văn bản
-async function sendMessage() {
-    const threadId = document.getElementById('messageThreadId').value;
-    const message = document.getElementById('messageContent').value;
-    
-    if (!threadId || !message || !currentOwnId) {
-        showError('sendMessageResult', 'Vui lòng nhập đầy đủ thông tin và đảm bảo đã đăng nhập');
-        return;
-    }
-
-    try {
-        const response = await fetch('/sendmessage', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                message,
-                threadId,
-                type: 'User',
-                ownId: currentOwnId
-            })
-        });
-        
-        const result = await response.json();
-        if (result.success) {
-            document.getElementById('sendMessageResult').innerHTML = 
-                '<div class="alert alert-success">Gửi tin nhắn thành công!</div>';
-            document.getElementById('messageContent').value = '';
-        } else {
-            showError('sendMessageResult', result.error || 'Không thể gửi tin nhắn');
-        }
-    } catch (error) {
-        showError('sendMessageResult', error);
-    }
-}
-
-// Gửi ảnh
-async function sendImage() {
-    const threadId = document.getElementById('imageThreadId').value;
-    const imagePath = document.getElementById('imagePath').value;
-    
-    if (!threadId || !imagePath || !currentOwnId) {
-        showError('sendImageResult', 'Vui lòng nhập đầy đủ thông tin và đảm bảo đã đăng nhập');
-        return;
-    }
-
-    try {
-        const response = await fetch('/sendImageToUser', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                threadId,
-                imagePath,
-                ownId: currentOwnId
-            })
-        });
-        
-        const result = await response.json();
-        if (result.success) {
-            document.getElementById('sendImageResult').innerHTML = 
-                '<div class="alert alert-success">Gửi ảnh thành công!</div>';
-            document.getElementById('imagePath').value = '';
-        } else {
-            showError('sendImageResult', result.error || 'Không thể gửi ảnh');
-        }
-    } catch (error) {
-        showError('sendImageResult', error);
-    }
-}
-
-// Test API tùy chỉnh
-async function testAPI() {
+// Function to test custom API
+function testAPI() {
     const method = document.getElementById('apiMethod').value;
     const endpoint = document.getElementById('apiEndpoint').value;
-    const bodyText = document.getElementById('apiBody').value;
-
+    const bodyEl = document.getElementById('apiBody');
+    
     if (!endpoint) {
-        showError('apiTestResult', 'Vui lòng nhập endpoint');
+        alert('Please select an API endpoint');
+        return;
+    }
+    
+    let requestOptions = {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    };
+    
+    if (method !== 'GET' && bodyEl.value.trim()) {
+        try {
+            // Parse JSON to validate it
+            const bodyObject = JSON.parse(bodyEl.value);
+            requestOptions.body = JSON.stringify(bodyObject);
+        } catch (e) {
+            alert('Invalid JSON in request body');
+            return;
+        }
+    }
+    
+    document.querySelector('#apiTestResult pre').textContent = 'Processing...';
+    
+        fetch(endpoint, requestOptions)
+            .then(response => response.json())
+            .then(data => {
+                document.querySelector('#apiTestResult pre').textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.querySelector('#apiTestResult pre').textContent = error.message;
+            });
+}
+
+// Hàm xử lý hiển thị/ẩn các trường input dựa theo lựa chọn phương thức nhận diện
+function toggleMessageInputFields() {
+    const method = document.getElementById('messageIdentifyMethod').value;
+    const threadIdInput = document.getElementById('messageThreadId');
+    const phoneInput = document.getElementById('messagePhone');
+    
+    if (method === 'userId') {
+        threadIdInput.style.display = 'block';
+        phoneInput.style.display = 'none';
+        threadIdInput.required = true;
+        phoneInput.required = false;
+    } else {
+        threadIdInput.style.display = 'none';
+        phoneInput.style.display = 'block';
+        threadIdInput.required = false;
+        phoneInput.required = true;
+    }
+}
+
+function toggleImageInputFields() {
+    const method = document.getElementById('imageIdentifyMethod').value;
+    const threadIdInput = document.getElementById('imageThreadId');
+    const phoneInput = document.getElementById('imagePhone');
+    
+    if (method === 'userId') {
+        threadIdInput.style.display = 'block';
+        phoneInput.style.display = 'none';
+        threadIdInput.required = true;
+        phoneInput.required = false;
+    } else {
+        threadIdInput.style.display = 'none';
+        phoneInput.style.display = 'block';
+        threadIdInput.required = false;
+        phoneInput.required = true;
+    }
+}
+
+// Hàm gửi tin nhắn thống nhất (unified)
+function sendMessageUnified() {
+    if (!selectedAccount) {
+        alert('Vui lòng chọn tài khoản trước');
         return;
     }
 
-    try {
-        const options = {
-            method: method,
-            headers: { 'Content-Type': 'application/json' }
-        };
+    const method = document.getElementById('messageIdentifyMethod').value;
+    const message = document.getElementById('messageContent').value.trim();
 
-        if (bodyText) {
-            options.body = bodyText;
-        }
-
-        const response = await fetch(endpoint, options);
-        const result = await response.text();
-        
-        try {
-            // Thử parse JSON
-            const jsonResult = JSON.parse(result);
-            document.querySelector('#apiTestResult pre').textContent = 
-                JSON.stringify(jsonResult, null, 2);
-        } catch {
-            // Nếu không phải JSON thì hiển thị text
-            document.querySelector('#apiTestResult pre').textContent = result;
-        }
-    } catch (error) {
-        showError('apiTestResult', error);
+    if (!message) {
+        alert('Vui lòng nhập nội dung tin nhắn');
+        return;
     }
-}
 
-// Hiển thị lỗi
-function showError(elementId, error) {
-    document.getElementById(elementId).innerHTML = `
-        <div class="alert alert-danger">
-            ${error.message || error}
-        </div>
-    `;
-}
-
-// Update WebSocket connection handling
-function setupWebSocket() {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}`;
-    const socket = new WebSocket(wsUrl);
+    let endpoint, requestBody;
     
-    socket.onmessage = function(event) {
-        if (event.data === 'login_success') {
-            showSuccessAndRedirect();
+    if (method === 'userId') {
+        const threadId = document.getElementById('messageThreadId').value.trim();
+        if (!threadId) {
+            alert('Vui lòng nhập Thread ID người nhận');
+            return;
         }
-    };
-    
-    socket.onclose = function() {
-        // Try to reconnect after 3 seconds
-        setTimeout(setupWebSocket, 3000);
-    };
-    
-    socket.onerror = function(error) {
-        console.error('WebSocket error:', error);
-    };
+        endpoint = '/sendmessage';
+        requestBody = {
+            ownId: selectedAccount,
+            threadId: threadId,
+            message: message,
+            type: 'User'
+        };
+    } else {
+        const phone = document.getElementById('messagePhone').value.trim();
+        if (!phone) {
+            alert('Vui lòng nhập số điện thoại người nhận');
+            return;
+        }
+        endpoint = '/sendMessageByPhoneNumber';
+        requestBody = {
+            ownId: selectedAccount,
+            phone: phone,
+            message: message
+        };
+    }
+
+    document.getElementById('sendMessageResult').innerHTML = '<div class="text-center">Đang gửi tin nhắn...</div>';
+
+    fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('sendMessageResult').innerHTML = 
+                `<div class="alert alert-success">Gửi tin nhắn thành công!</div>`;
+        } else {
+            document.getElementById('sendMessageResult').innerHTML = 
+                `<div class="alert alert-danger">Lỗi: ${data.error || 'Không thể gửi tin nhắn'}</div>`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('sendMessageResult').innerHTML = 
+            `<div class="alert alert-danger">Lỗi: ${error.message}</div>`;
+    });
 }
 
-// Start the WebSocket connection when the page loads
-window.onload = async () => {
-    await loadAccounts();
-    updateWelcomeMessage();
-    setupWebSocket();
-};
+// Hàm gửi hình ảnh thống nhất (unified)
+function sendImageUnified() {
+    if (!selectedAccount) {
+        alert('Vui lòng chọn tài khoản trước');
+        return;
+    }
+
+    const method = document.getElementById('imageIdentifyMethod').value;
+    const imagePath = document.getElementById('imagePath').value.trim();
+
+    if (!imagePath) {
+        alert('Vui lòng nhập URL hình ảnh');
+        return;
+    }
+
+    let endpoint, requestBody;
+    
+    if (method === 'userId') {
+        const threadId = document.getElementById('imageThreadId').value.trim();
+        if (!threadId) {
+            alert('Vui lòng nhập Thread ID người nhận');
+            return;
+        }
+        endpoint = '/sendImageToUser';
+        requestBody = {
+            ownId: selectedAccount,
+            threadId: threadId,
+            imagePath: imagePath
+        };
+    } else {
+        const phone = document.getElementById('imagePhone').value.trim();
+        if (!phone) {
+            alert('Vui lòng nhập số điện thoại người nhận');
+            return;
+        }
+        endpoint = '/sendImageByPhoneNumber';
+        requestBody = {
+            ownId: selectedAccount,
+            phone: phone,
+            imagePath: imagePath
+        };
+    }
+
+    document.getElementById('sendImageResult').innerHTML = '<div class="text-center">Đang gửi hình ảnh...</div>';
+
+    fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('sendImageResult').innerHTML = 
+                `<div class="alert alert-success">Gửi hình ảnh thành công!</div>`;
+        } else {
+            document.getElementById('sendImageResult').innerHTML = 
+                `<div class="alert alert-danger">Lỗi: ${data.error || 'Không thể gửi hình ảnh'}</div>`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('sendImageResult').innerHTML = 
+            `<div class="alert alert-danger">Lỗi: ${error.message}</div>`;
+    });
+}

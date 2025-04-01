@@ -309,6 +309,132 @@ export async function sendImagesToGroup(req, res) {
     }
 }
 
+export async function acceptFriendRequest(req, res) {
+    try {
+        const { userId, ownId } = req.body;
+        if (!userId || !ownId) {
+            return res.status(400).json({ error: 'Dữ liệu không hợp lệ: userId và ownId là bắt buộc' });
+        }
+        const account = zaloAccounts.find(acc => acc.ownId === ownId);
+        if (!account) {
+            return res.status(400).json({ error: 'Không tìm thấy tài khoản Zalo với OwnId này' });
+        }
+        // Gọi API acceptFriendRequest từ zca-js
+        const result = await account.api.acceptFriendRequest(userId);
+        res.json({ success: true, data: result });
+    } catch (error) {
+        console.error('Lỗi trong hàm acceptFriendRequest:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+}
+export async function sendMessageByPhoneNumber(req, res) {
+    try {
+        const { phone, message, ownId } = req.body;
+        if (!phone || !message || !ownId) {
+            return res.status(400).json({ error: 'Dữ liệu không hợp lệ: phone và message là bắt buộc' });
+        }
+
+        const account = zaloAccounts.find(acc => acc.ownId === ownId);
+        if (!account) {
+            return res.status(400).json({ error: 'Không tìm thấy tài khoản Zalo với OwnId này' });
+        }
+
+        // Bước 1: Tìm người dùng qua số điện thoại
+        console.log(`Tìm kiếm người dùng với số điện thoại: ${phone}`);
+        const userData = await account.api.findUser(phone);
+        
+        if (!userData || !userData.uid) {
+            return res.status(404).json({ success: false, error: 'Không tìm thấy người dùng với số điện thoại này' });
+        }
+        
+        const userId = userData.uid;
+        console.log(`Đã tìm thấy người dùng: ${userData.display_name || userData.zalo_name} (ID: ${userId})`);
+        
+        // Bước 2: Gửi tin nhắn
+        const result = await account.api.sendMessage(
+            message,
+            userId,
+            ThreadType.User
+        ).catch(error => {
+            console.error('Lỗi khi gửi tin nhắn:', error);
+            throw error;
+        });
+        
+        res.json({ 
+            success: true, 
+            data: result,
+            user: {
+                userId: userData.uid,
+                name: userData.display_name || userData.zalo_name
+            }
+        });
+    } catch (error) {
+        console.error('Lỗi trong hàm sendMessageByPhoneNumber:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+// Hàm gửi hình ảnh qua số điện thoại (kết hợp findUser và sendImageToUser)
+export async function sendImageByPhoneNumber(req, res) {
+    try {
+        const { phone, imagePath: imageUrl, ownId } = req.body;
+        if (!phone || !imageUrl || !ownId) {
+            return res.status(400).json({ error: 'Dữ liệu không hợp lệ: phone và imagePath là bắt buộc' });
+        }
+
+        const account = zaloAccounts.find(acc => acc.ownId === ownId);
+        if (!account) {
+            return res.status(400).json({ error: 'Không tìm thấy tài khoản Zalo với OwnId này' });
+        }
+
+        // Bước 1: Tìm người dùng qua số điện thoại
+        console.log(`Tìm kiếm người dùng với số điện thoại: ${phone}`);
+        const userData = await account.api.findUser(phone);
+        
+        if (!userData || !userData.uid) {
+            return res.status(404).json({ success: false, error: 'Không tìm thấy người dùng với số điện thoại này' });
+        }
+        
+        const userId = userData.uid;
+        console.log(`Đã tìm thấy người dùng: ${userData.display_name || userData.zalo_name} (ID: ${userId})`);
+        
+        // Bước 2: Tải và lưu hình ảnh
+        const imagePath = await saveImage(imageUrl);
+        if (!imagePath) {
+            return res.status(500).json({ success: false, error: 'Không thể tải hình ảnh' });
+        }
+
+        // Bước 3: Gửi tin nhắn với hình ảnh
+        const result = await account.api.sendMessage(
+            {
+                msg: "",
+                attachments: [imagePath]
+            },
+            userId,
+            ThreadType.User
+        ).catch(error => {
+            console.error('Lỗi khi gửi tin nhắn:', error);
+            throw error;
+        });
+
+        // Dọn dẹp hình ảnh tạm thời
+        removeImage(imagePath);
+        
+        res.json({ 
+            success: true, 
+            data: result,
+            user: {
+                userId: userData.uid,
+                name: userData.display_name || userData.zalo_name
+            }
+        });
+    } catch (error) {
+        console.error('Lỗi trong hàm sendImageByPhoneNumber:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+
 export async function loginZaloAccount(customProxy, cred) {
     let loginResolve;
     return new Promise(async (resolve, reject) => {

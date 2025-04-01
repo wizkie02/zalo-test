@@ -13,8 +13,43 @@ const __dirname = path.dirname(__filename);
 const configPath = path.join(__dirname, 'webhook-config.json');
 
 router.get('/', (req, res) => {
-    res.redirect('/zalo-login');
-});
+    res.send(`
+  <!DOCTYPE html>
+  <html lang="vi">
+  <head>
+    <meta charset="UTF-8">
+    <title>Zalo server</title>
+  </head>
+  <body>
+    <h1>Zalo server - Đăng nhập qua QR Code với Proxy</h1>
+    <p><strong>(Mỗi Proxy tối đa 3 tài khoản)</strong></p>
+    
+    <h2>CÁCH CÀI GIỚI HẠN GỬI NGƯỜI LẠ ZALO:</h2>
+    <ul>
+      <li><strong>Thời gian nghỉ</strong> giữa 2 lần gửi tin nhắn (dòng 1): <em>60 - 150 giây</em></li>
+      <li><strong>Giới hạn gửi tin nhắn</strong> trong ngày (dòng 2):
+        <ul>
+          <li>TK Zalo lâu năm, trên 1 năm, chưa từng bị hạn chế: Chỉnh <strong>30</strong> (sau đó tăng dần, mỗi 3 ngày, tăng +20, tối đa 150).</li>
+          <li>TK Zalo mới tạo: Chỉ nên <strong>10 - 30</strong> tin nhắn / nick.</li>
+        </ul>
+      </li>
+      <li><strong>Giới hạn lượt tìm số điện thoại</strong> trong 1 tiếng:
+        <ul>
+          <li>TK cá nhân: 15 tin nhắn trong 60 phút.</li>
+          <li>TK business: 30 tin nhắn trong 60 phút.</li>
+        </ul>
+      </li>
+      <li><strong>Khi chạy kết bạn</strong>: 
+        <ul>
+          <li>Không nên vượt quá <strong>30 - 35 người/ngày</strong> với tài khoản cá nhân.</li>
+          <li>Nếu đang chạy gửi tin nhắn nhiều, nên tách riêng quá trình kết bạn để tránh giới hạn.</li>
+        </ul>
+      </li>
+    </ul>
+  </body>
+  </html>
+    `);
+  });
   
 
 // Hiển thị form đăng nhập
@@ -41,7 +76,8 @@ router.get('/dashboard', (req, res) => {
     });
 });
 
-// Xử lý đăng nhập
+// Xử lý đăng nhập: sử dụng proxy do người dùng nhập nếu hợp lệ, nếu không sẽ sử dụng proxy mặc định
+let loginResolve;
 router.post('/zalo-login', async (req, res) => {
     try {
         const { proxy } = req.body;
@@ -50,39 +86,21 @@ router.post('/zalo-login', async (req, res) => {
             <html>
                <head>
                   <meta charset="UTF-8">
+                  <meta charset="UTF-8">
                   <title>Quét mã QR</title>
-                  <style>
-                    .success-message {
-                        position: fixed;
-                        top: 20px;
-                        right: 20px;
-                        padding: 15px;
-                        background-color: #4CAF50;
-                        color: white;
-                        border-radius: 4px;
-                        display: none;
-                        animation: slideIn 0.5s;
-                    }
-                    @keyframes slideIn {
-                        from { transform: translateX(100%); }
-                        to { transform: translateX(0); }
-                    }
-                  </style>
                </head>
                <body>
-                  <div id="successMessage" class="success-message">Đăng nhập thành công!</div>
                   <h2>Quét mã QR để đăng nhập</h2>
                   <img src="${qrCodeImage}" alt="QR Code"/>
                   <script>
                       const socket = new WebSocket('ws://localhost:3000');
                       socket.onmessage = function(event) {
-                          console.log('WebSocket message:', event.data);
+                            console.log(event.data)
                           if (event.data === 'login_success') {
-                              const successMsg = document.getElementById('successMessage');
-                              successMsg.style.display = 'block';
-                              setTimeout(() => {
-                                  window.location.href = '/dashboard';
-                              }, 2000);
+                              document.body.innerHTML = \`
+                                  <h2>Đăng nhập thành công!</h2>
+                                  <p style='color: green;'><b>Đăng nhập thành công!</b></p>
+                              \`;
                           }
                       };
                   </script>
