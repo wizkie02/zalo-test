@@ -78,6 +78,16 @@ router.get('/dashboard', (req, res) => {
 
 // Xử lý đăng nhập: sử dụng proxy do người dùng nhập nếu hợp lệ, nếu không sẽ sử dụng proxy mặc định
 let loginResolve;
+router.post('/api/get-zalo-qr', async (req, res) => {
+    try {
+      const { proxy } = req.body;
+      const qrCodeImage = await loginZaloAccount(proxy, null);
+      res.json({ qr: qrCodeImage });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
 router.post('/zalo-login', async (req, res) => {
     try {
         const { proxy } = req.body;
