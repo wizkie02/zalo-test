@@ -14,7 +14,9 @@ import {
     sendImageToUser,
     sendImagesToUser,
     sendImageToGroup,
-    sendImagesToGroup
+    sendImagesToGroup,
+    sendMessageByPhoneNumber,
+    sendImageByPhoneNumber
 } from './zaloService.js';
 
 const router = express.Router();
@@ -37,5 +39,8 @@ router.post('/sendImagesToUser', sendImagesToUser);
 router.post('/sendImageToGroup', sendImageToGroup);
 router.post('/sendImagesToGroup', sendImagesToGroup);
 
+// Thêm API mới
+router.post('/sendMessageByPhoneNumber', sendMessageByPhoneNumber);
+router.post('/sendImageByPhoneNumber', sendImageByPhoneNumber);
 
 export default router;

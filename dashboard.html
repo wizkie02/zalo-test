@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Zalo API Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .api-card { margin-bottom: 20px; }
+        .result-area {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        pre.json {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .nav-tabs { margin-bottom: 20px; }
+        .welcome-text {
+            color: white;
+            margin-right: 15px;
+        }
+        .endpoint-template {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">Zalo API</a>
+            <div class="navbar-nav me-auto">
+                <a class="nav-link" href="/zalo-login">Login QR</a>
+                <a class="nav-link" href="/accounts">Tài khoản</a>
+                <a class="nav-link active" href="/dashboard">Dashboard</a>
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="welcome-text" id="welcomeMessage">Xin chào </span>
+                <button class="btn btn-outline-light" onclick="logout()">Đăng xuất</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">Tài khoản đang sử dụng</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="currentAccount"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs" id="apiTabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#search">Tìm kiếm</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#message">Tin nhắn</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#accounts">Quản lý tài khoản</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#apitest">Test API</a>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Tab Tìm kiếm -->
+            <div class="tab-pane fade show active" id="search">
+                <div class="card api-card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Tìm người dùng qua số điện thoại</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <input type="text" class="form-control" id="phone" placeholder="Nhập số điện thoại (VD: 0912345678)">
+                        </div>
+                        <button class="btn btn-primary" onclick="findUser()">Tìm kiếm</button>
+                        <div id="findUserResult" class="mt-3 result-area"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Tin nhắn -->
+            <div class="tab-pane fade" id="message">
+                <!-- Gửi tin nhắn theo User ID -->
+                <div class="card api-card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Gửi tin nhắn văn bản (theo User ID)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <input type="text" class="form-control mb-2" id="messageThreadId" placeholder="Thread ID người nhận">
+                            <textarea class="form-control" id="messageContent" rows="3" placeholder="Nội dung tin nhắn"></textarea>
+                        </div>
+                        <button class="btn btn-success" onclick="sendMessage()">Gửi tin nhắn</button>
+                        <div id="sendMessageResult" class="mt-3 result-area"></div>
+                    </div>
+                </div>
+
+                <!-- Gửi tin nhắn theo số điện thoại (mới) -->
+                <div class="card api-card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Gửi tin nhắn văn bản (theo số điện thoại)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <input type="text" class="form-control mb-2" id="messagePhone" placeholder="Số điện thoại người nhận">
+                            <textarea class="form-control" id="messagePhoneContent" rows="3" placeholder="Nội dung tin nhắn"></textarea>
+                        </div>
+                        <button class="btn btn-success" onclick="sendMessageByPhone()">Gửi tin nhắn</button>
+                        <div id="sendMessageByPhoneResult" class="mt-3 result-area"></div>
+                    </div>
+                </div>
+
+                <!-- Gửi ảnh theo User ID -->
+                <div class="card api-card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">Gửi hình ảnh (theo User ID)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <input type="text" class="form-control mb-2" id="imageThreadId" placeholder="Thread ID người nhận">
+                            <input type="text" class="form-control" id="imagePath" placeholder="URL hình ảnh">
+                        </div>
+                        <button class="btn btn-info" onclick="sendImage()">Gửi ảnh</button>
+                        <div id="sendImageResult" class="mt-3 result-area"></div>
+                    </div>
+                </div>
+
+                <!-- Gửi ảnh theo số điện thoại (mới) -->
+                <div class="card api-card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">Gửi hình ảnh (theo số điện thoại)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <input type="text" class="form-control mb-2" id="imagePhone" placeholder="Số điện thoại người nhận">
+                            <input type="text" class="form-control" id="imagePhonePath" placeholder="URL hình ảnh">
+                        </div>
+                        <button class="btn btn-info" onclick="sendImageByPhone()">Gửi ảnh</button>
+                        <div id="sendImageByPhoneResult" class="mt-3 result-area"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Quản lý tài khoản -->
+            <div class="tab-pane fade" id="accounts">
+                <div class="card api-card">
+                    <div class="card-header bg-warning">
+                        <h5 class="mb-0">Danh sách tài khoản</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-warning mb-3" onclick="loadAccounts()">Làm mới danh sách</button>
+                        <div id="accountsList" class="result-area"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Test API -->
+            <div class="tab-pane fade" id="apitest">
+                <div class="card api-card">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">Test API tùy chỉnh</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <select class="form-select mb-2" id="apiMethod">
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="DELETE">DELETE</option>
+                            </select>
+                            <select class="form-select mb-2" id="apiEndpoint" onchange="updateRequestBody(); document.getElementById('apiMethod').value = 'POST';">
+                                <option value="">Chọn API Endpoint</option>
+                                <!-- Friends Management -->
+                                <option value="/getAllFriends">Lấy tất cả bạn bè (/getAllFriends)</option>
+                                <option value="/findUser">Tìm người dùng (/findUser)</option>
+                                <option value="/getUserInfo">Lấy thông tin người dùng (/getUserInfo)</option>
+                                <option value="/sendFriendRequest">Gửi lời mời kết bạn (/sendFriendRequest)</option>
+                                <option value="/acceptFriendRequest">Chấp nhận lời mời kết bạn (/acceptFriendRequest)</option>
+                                <option value="/blockUser">Chặn người dùng (/blockUser)</option>
+                                <option value="/unblockUser">Bỏ chặn người dùng (/unblockUser)</option>
+                                <option value="/changeFriendAlias">Đổi biệt danh bạn bè (/changeFriendAlias)</option>
+
+                                <!-- Group Management -->
+                                <option value="/createGroup">Tạo nhóm mới (/createGroup)</option>
+                                <option value="/getAllGroups">Lấy tất cả nhóm (/getAllGroups)</option>
+                                <option value="/getGroupInfo">Lấy thông tin nhóm (/getGroupInfo)</option>
+                                <option value="/addUserToGroup">Thêm thành viên vào nhóm (/addUserToGroup)</option>
+                                <option value="/removeUserFromGroup">Xóa thành viên khỏi nhóm (/removeUserFromGroup)</option>
+                                <option value="/changeGroupName">Đổi tên nhóm (/changeGroupName)</option>
+                                <option value="/changeGroupAvatar">Đổi ảnh nhóm (/changeGroupAvatar)</option>
+
+                                <!-- Messages and Media -->
+                                <option value="/sendmessage">Gửi tin nhắn văn bản (/sendmessage)</option>
+                                <option value="/sendMessageByPhoneNumber">Gửi tin nhắn qua SĐT (/sendMessageByPhoneNumber)</option>
+                                <option value="/sendImageToUser">Gửi ảnh cho người dùng (/sendImageToUser)</option>
+                                <option value="/sendImageByPhoneNumber">Gửi ảnh qua SĐT (/sendImageByPhoneNumber)</option>
+                                <option value="/sendImagesToUser">Gửi nhiều ảnh cho người dùng (/sendImagesToUser)</option>
+                                <option value="/sendImageToGroup">Gửi ảnh vào nhóm (/sendImageToGroup)</option>
+                                <option value="/sendImagesToGroup">Gửi nhiều ảnh vào nhóm (/sendImagesToGroup)</option>
+                            </select>
+                            <textarea class="form-control" id="apiBody" rows="5" placeholder="Request body (JSON)"></textarea>
+                        </div>
+                        <button class="btn btn-secondary" onclick="testAPI()">Gửi request</button>
+                        <div id="apiTestResult" class="mt-3">
+                            <pre class="json"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Templates (hidden) -->
+            <div class="endpoint-template" id="template-findUser">
+{
+    "ownId": "your_account_id",
+    "phone": "0912345678"
+}</div>
+
+            <div class="endpoint-template" id="template-getUserInfo">
+{
+    "ownId": "your_account_id",
+    "userId": "user_id"
+}</div>
+
+            <div class="endpoint-template" id="template-sendFriendRequest">
+{
+    "ownId": "your_account_id",
+    "userId": "user_id_to_add"
+}</div>
+
+            <div class="endpoint-template" id="template-sendmessage">
+{
+    "ownId": "your_account_id",
+    "threadId": "thread_id",
+    "message": "Hello, this is a test message",
+    "type": "User"
+}</div>
+
+            <div class="endpoint-template" id="template-sendMessageByPhoneNumber">
+{
+    "ownId": "your_account_id",
+    "phone": "0912345678",
+    "message": "Hello, this is a test message"
+}</div>
+
+            <div class="endpoint-template" id="template-createGroup">
+{
+    "ownId": "your_account_id",
+    "name": "Group Name",
+    "members": ["user_id_1", "user_id_2"]
+}</div>
+
+            <div class="endpoint-template" id="template-getGroupInfo">
+{
+    "ownId": "your_account_id",
+    "groupId": "group_id"
+}</div>
+
+            <div class="endpoint-template" id="template-addUserToGroup">
+{
+    "ownId": "your_account_id",
+    "groupId": "group_id",
+    "memberId": "user_id_to_add"
+}</div>
+
+            <div class="endpoint-template" id="template-removeUserFromGroup">
+{
+    "ownId": "your_account_id",
+    "groupId": "group_id",
+    "memberId": "user_id_to_remove"
+}</div>
+
+            <div class="endpoint-template" id="template-sendImageToUser">
+{
+    "ownId": "your_account_id",
+    "threadId": "thread_id",
+    "imagePath": "url_to_image"
+}</div>
+
+            <div class="endpoint-template" id="template-sendImageByPhoneNumber">
+{
+    "ownId": "your_account_id",
+    "phone": "0912345678",
+    "imagePath": "url_to_image"
+}</div>
+
+            <div class="endpoint-template" id="template-sendImagesToUser">
+{
+    "ownId": "your_account_id",
+    "threadId": "thread_id",
+    "imagePaths": ["url_to_image1", "url_to_image2"]
+}</div>
+
+            <div class="endpoint-template" id="template-sendImageToGroup">
+{
+    "ownId": "your_account_id",
+    "threadId": "group_id",
+    "imagePath": "url_to_image"
+}</div>
+
+            <div class="endpoint-template" id="template-sendImagesToGroup">
+{
+    "ownId": "your_account_id",
+    "threadId": "group_id",
+    "imagePaths": ["url_to_image1", "url_to_image2"]
+}</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>

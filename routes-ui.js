@@ -29,6 +29,18 @@ router.get('/zalo-login', (req, res) => {
     });
 });
 
+// Hiển thị trang dashboard
+router.get('/dashboard', (req, res) => {
+    const dashboardFile = path.join(__dirname, 'dashboard.html');
+    fs.readFile(dashboardFile, 'utf8', (err, data) => {
+      if (err) {
+        console.error('Lỗi khi đọc file dashboard.html:', err);
+        return res.status(500).send('Không thể tải trang dashboard.');
+      }
+      res.send(data);
+    });
+});
+
 // Xử lý đăng nhập
 router.post('/zalo-login', async (req, res) => {
     try {
@@ -139,6 +151,48 @@ router.get('/accounts', (req, res) => {
     res.send(html);
 });
 
+// API endpoints for dashboard
+// Get all accounts as JSON for dashboard
+router.get('/api/accounts', (req, res) => {
+    if (zaloAccounts.length === 0) {
+        return res.json({ success: true, accounts: [] });
+    }
+    
+    const accounts = zaloAccounts.map(account => ({
+        ownId: account.ownId,
+        phoneNumber: account.phoneNumber || 'N/A',
+        proxy: account.proxy
+    }));
+    
+    res.json({ success: true, accounts: accounts });
+});
+
+// Get single account details
+router.get('/api/account/:ownId', (req, res) => {
+    const ownId = req.params.ownId;
+    const account = zaloAccounts.find(acc => acc.ownId === ownId);
+    
+    if (account) {
+        res.json({ 
+            success: true, 
+            account: {
+                ownId: account.ownId,
+                phoneNumber: account.phoneNumber || 'N/A',
+                proxy: account.proxy
+            }
+        });
+    } else {
+        res.status(404).json({ success: false, error: 'Account not found' });
+    }
+});
+
+// Logout endpoint
+router.post('/logout', (req, res) => {
+    // Currently just returns success
+    // In a real implementation, you would handle actual logout logic
+    res.json({ success: true, message: 'Logged out successfully' });
+});
+
 // Endpoint cập nhật 3 webhook URL
 router.post('/updateWebhook', (req, res) => {
   const { messageWebhookUrl, groupEventWebhookUrl, reactionWebhookUrl } = req.body;
@@ -195,5 +249,8 @@ router.delete('/proxies', (req, res) => {
       res.status(500).json({ success: false, error: error.message });
   }
 });
+
+// Serve static files from public directory
+router.use(express.static(path.join(__dirname, 'public')));
 
 export default router;
