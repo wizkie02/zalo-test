@@ -216,9 +216,23 @@ router.get('/api/account/:ownId', (req, res) => {
 
 // Logout endpoint
 router.post('/logout', (req, res) => {
-    // Currently just returns success
-    // In a real implementation, you would handle actual logout logic
-    res.json({ success: true, message: 'Logged out successfully' });
+    const { ownId } = req.body;
+    
+    if (!ownId) {
+        return res.status(400).json({ success: false, error: 'ownId is required' });
+    }
+    
+    // Tìm index của tài khoản trong mảng
+    const accountIndex = zaloAccounts.findIndex(acc => acc.ownId === ownId);
+    
+    if (accountIndex !== -1) {
+        // Xóa tài khoản khỏi mảng
+        zaloAccounts.splice(accountIndex, 1);
+        console.log(`Account ${ownId} has been logged out and removed`);
+        res.json({ success: true, message: 'Logged out successfully' });
+    } else {
+        res.status(404).json({ success: false, error: 'Account not found' });
+    }
 });
 
 // Endpoint cập nhật 3 webhook URL

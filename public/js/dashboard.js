@@ -18,14 +18,15 @@ function loadAccounts() {
                 // Display accounts in the account list
                 let accountsList = document.getElementById('accountsList');
                 let html = '<table class="table table-striped">';
-                html += '<thead><tr><th>ID</th><th>Phone Number</th><th>Proxy</th><th>Action</th></tr></thead><tbody>';
+                html += '<thead><tr><th>ID</th><th>Phone Number</th><th>Proxy</th><th colspan="2">Action</th></tr></thead><tbody>';
                 
                 data.accounts.forEach(account => {
                     html += `<tr>
                         <td>${account.ownId}</td>
-                        <td>${account.phone || 'N/A'}</td>
+                        <td>${account.phoneNumber || 'N/A'}</td>
                         <td>${account.proxy || 'N/A'}</td>
                         <td><button class="btn btn-sm btn-primary" onclick="selectAccount('${account.ownId}')">Select</button></td>
+                        <td><button class="btn btn-sm btn-danger" onclick="logoutAccount('${account.ownId}')">Đăng xuất</button></td>
                     </tr>`;
                 });
                 
@@ -38,12 +39,79 @@ function loadAccounts() {
                 }
             } else {
                 document.getElementById('accountsList').innerHTML = '<div class="alert alert-warning">No accounts available. Please login first.</div>';
+                // Redirect to login page if no accounts available
+                if (!data.accounts || data.accounts.length === 0) {
+                    setTimeout(() => {
+                        window.location.href = '/zalo-login';
+                    }, 2000);
+                }
             }
         })
         .catch(error => {
             console.error('Error loading accounts:', error);
             document.getElementById('accountsList').innerHTML = '<div class="alert alert-danger">Error loading accounts. Please try again.</div>';
         });
+}
+
+// Function to logout the currently selected account
+function logout() {
+    if (!selectedAccount) {
+        alert('No account selected to logout');
+        return;
+    }
+    
+    logoutAccount(selectedAccount);
+}
+
+// Function to logout a specific account
+function logoutAccount(ownId) {
+    if (confirm(`Are you sure you want to logout account ${ownId}?`)) {
+        fetch('/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ownId: ownId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Đăng xuất thành công');
+                
+                // If the logged out account was the selected one, clear the selection
+                if (ownId === selectedAccount) {
+                    selectedAccount = '';
+                    // Clear the current account display
+                    document.getElementById('currentAccount').innerHTML = '<div class="alert alert-warning">No account selected</div>';
+                    document.getElementById('welcomeMessage').textContent = 'Welcome';
+                }
+                
+                // Reload accounts list after logout
+                fetch('/api/accounts')
+                    .then(response => response.json())
+                    .then(data => {
+                        // If no accounts left after logout, redirect to login page
+                        if (!data.accounts || data.accounts.length === 0) {
+                            alert('Không còn tài khoản nào. Đang chuyển hướng đến trang đăng nhập...');
+                            window.location.href = '/zalo-login';
+                        } else {
+                            // Otherwise just reload the accounts list
+                            loadAccounts();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking accounts after logout:', error);
+                        loadAccounts(); // Still try to reload accounts list
+                    });
+            } else {
+                alert(`Đăng xuất thất bại: ${data.error || 'Unknown error'}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error during logout:', error);
+            alert(`Lỗi khi đăng xuất: ${error.message}`);
+        });
+    }
 }
 
 // Function to select an account
